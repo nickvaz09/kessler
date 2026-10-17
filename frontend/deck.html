@@ -1,0 +1,1820 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KESSLER · Demo Deck</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='2.5' fill='%23dbe2ea'/%3E%3C/svg%3E">
+<script>
+/* preload the display face when served; a CORS preload from file:// only logs an error */
+if (/^https?:$/.test(location.protocol)) {
+  const l = document.createElement('link');
+  Object.assign(l, { rel: 'preload', href: 'fonts/InterVariable.woff2', as: 'font',
+                     type: 'font/woff2', crossOrigin: 'anonymous' });
+  document.head.appendChild(l);
+}
+</script>
+<style>
+/* Vendored fonts: the deck must render identically offline on demo day. */
+@font-face { font-family: 'Inter'; src: url('fonts/InterVariable.woff2') format('woff2');
+             font-weight: 100 900; font-style: normal; font-display: block; }
+@font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Regular.woff2') format('woff2');
+             font-weight: 400; font-style: normal; font-display: block; }
+@font-face { font-family: 'JetBrains Mono'; src: url('fonts/JetBrainsMono-Medium.woff2') format('woff2');
+             font-weight: 500 600; font-style: normal; font-display: block; }
+/* ===========================================================================
+   KESSLER - demo deck
+   Keynote discipline: centered stage, giant type, odometer numbers, one wide
+   chart where the win points UP, and a mark on every slide - never a box.
+   Every slide builds on its own as it arrives; a keypress moves slides.
+   Keyboard: -> ␣ ↓ next · <- ↑ back · HOME/END jump · F fullscreen.
+   ======================================================================== */
+:root {
+  --bg: #05070c;
+  --border: #1e2733;
+  --text: #dbe2ea;
+  --text-2: #93a1b0;
+  --text-3: #728394;
+  --blue: #3987e5;
+  --blue-soft: rgba(57, 135, 229, 0.45);
+  --elevated: #e0a63c;
+  --critical: #e05252;
+  --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  cursor: default;
+}
+body.idle { cursor: none; }
+
+canvas#space { position: fixed; inset: 0; width: 100%; height: 100%; }
+
+/* --- slides: a centered stage ------------------------------------------------ */
+.slide {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center;
+  padding: 0 clamp(28px, 6vw, 110px);
+  opacity: 0; visibility: hidden;
+  transform: translateY(24px) scale(0.985);
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease),
+              visibility 0s linear 0.65s;
+}
+.slide.is-active {
+  opacity: 1; visibility: visible;
+  transform: none;
+  transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+}
+
+/* entrance choreography */
+.anim {
+  opacity: 0;
+  transform: translateY(26px);
+  filter: blur(6px);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease),
+              filter 0.9s var(--ease);
+  transition-delay: var(--d, 0s);
+}
+.is-in .anim { opacity: 1; transform: none; filter: none; }
+
+/* builds: they play on their own as the slide arrives (see playBuilds) */
+[data-step] {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+[data-step].is-on { opacity: 1; transform: none; }
+
+/* --- odometer digits: every number rolls like a meter ------------------------- */
+[data-count] { display: inline-flex; position: relative; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+      clip-path: inset(50%); white-space: nowrap; }
+[data-count] .od { display: block; height: 1em; overflow: hidden; }
+[data-count] .od-sep { display: block; height: 1em; line-height: 1; }
+.od-col { display: block; will-change: transform; }
+.od-col i { display: block; height: 1em; line-height: 1; font-style: normal; }
+
+/* --- type voices ------------------------------------------------------------ */
+.display {
+  font-weight: 650;
+  font-size: clamp(52px, 8.6vw, 150px);
+  line-height: 1.0;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+.statement {
+  font-weight: 200;
+  font-size: clamp(34px, 5.4vw, 82px);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  max-width: 20ch;
+  color: var(--text);
+}
+.statement b { font-weight: 550; }
+.sub {
+  font-weight: 400;
+  font-size: clamp(15px, 1.65vw, 23px);
+  line-height: 1.55;
+  color: var(--text-2);
+  max-width: 52ch;
+  margin-top: clamp(22px, 3.6vh, 40px);
+}
+.mega {
+  font: 500 min(16.5vw, 27vh, 320px) var(--mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: var(--text);
+  justify-content: center;
+}
+.mega-label {
+  font: 500 clamp(12px, 1.35vw, 18px) var(--mono);
+  letter-spacing: 0.32em;
+  color: var(--text-2);
+  margin-top: 18px;
+  text-indent: 0.32em;
+}
+/* build lines: centered statements that arrive in turn */
+.rows { display: flex; flex-direction: column; align-items: center;
+        gap: clamp(14px, 2.6vh, 30px);
+        margin-top: clamp(22px, 4vh, 48px); }
+.row {
+  font-weight: 200; font-size: min(3vw, 4.2vh, 44px);
+  line-height: 1.25; letter-spacing: -0.01em; color: var(--text);
+  max-width: 34ch; text-wrap: balance;
+}
+.row b { font-weight: 550; }
+.row.dim { color: var(--text-2); }
+.cascade { color: var(--critical); }
+
+/* the presenter, once, quietly */
+.credit { position: absolute; left: 0; right: 0; bottom: clamp(48px, 9vh, 104px);
+          font: 500 clamp(10px, 0.95vw, 13px) var(--mono); letter-spacing: 0.32em;
+          color: var(--text-3); text-indent: 0.32em; }
+
+/* small label chips - the product's own idiom, used once */
+.chips { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+         margin-top: clamp(32px, 6vh, 60px); }
+.chip {
+  font: 500 clamp(11px, 1.1vw, 14px) var(--mono);
+  letter-spacing: 0.22em;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 12px 18px;
+}
+.chip.hot { color: var(--blue); border-color: var(--blue-soft); }
+
+/* the mark as a letter: rides the wordmark baseline at cap size */
+.inmark { display: inline-block; height: 1.5em; width: auto;
+          vertical-align: -0.39em; margin-left: 0.06em;
+          margin-right: -0.12em; }
+
+/* glyphs: tiny hairline marks in the brand's geometry - one anchor per slide */
+.glyph { display: block; margin: 0 auto clamp(20px, 3.4vh, 34px); }
+.orbit-glyph { position: relative; width: 96px; height: 40px;
+               margin: 0 auto clamp(20px, 3.4vh, 34px); }
+.orbit-glyph .og-ring { position: absolute; inset: 0; border: 1px solid var(--text-3);
+                        border-radius: 50%; opacity: 0.55; }
+.orbit-glyph .og-spin { position: absolute; left: 50%; top: 50%; width: 0; height: 0;
+                        transform: scaleY(0.4); }
+.orbit-glyph .og-dot { position: absolute; width: 7px; height: 7px; margin: -3.5px;
+                       border-radius: 50%; background: var(--blue);
+                       animation: og-orbit 7s linear infinite; }
+@keyframes og-orbit {
+  from { transform: rotate(0turn) translateX(47px); }
+  to { transform: rotate(1turn) translateX(47px); }
+}
+
+
+/* s3: kinetic focus - each letter arrives out of focus and sharpens; then
+   the word itself quietly loses focus again. Meaning, performed. */
+.k { display: inline-block; opacity: 0; filter: blur(10px);
+     transform: translateY(0.14em);
+     transition: opacity 0.7s var(--ease) var(--d, 0s),
+                 filter 0.7s var(--ease) var(--d, 0s),
+                 transform 0.7s var(--ease) var(--d, 0s); }
+[data-step].is-on .k { opacity: 1; filter: blur(0); transform: none; }
+[data-step].is-on .blindw { animation: defocus 1.5s var(--ease) 0.85s forwards; }
+@keyframes defocus { to { filter: blur(2.4px); opacity: 0.66; } }
+.blindw, .kw { display: inline-block; white-space: nowrap; }
+
+/* s4b: the console - the product floats on stage in a window, keynote-style */
+.frame { position: relative; width: min(940px, 70vw, 92vh);
+         border-radius: 14px; overflow: hidden;
+         border: 1px solid rgba(147, 161, 176, 0.22);
+         background: #0a0d11;
+         box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6),
+                     0 0 90px rgba(57, 135, 229, 0.07); }
+/* a soft floor glow grounds the window in the dark */
+.frame::after { content: ''; position: absolute; inset: 0; border-radius: 14px;
+                pointer-events: none;
+                box-shadow: inset 0 1px 0 rgba(219, 226, 234, 0.06); }
+.frame-bar { display: flex; align-items: center; gap: 7px;
+             height: 34px; padding: 0 14px;
+             background: rgba(14, 19, 25, 0.95);
+             border-bottom: 1px solid rgba(30, 39, 51, 0.9); }
+.frame-bar > i { width: 9px; height: 9px; border-radius: 50%;
+               background: #2a3542; }
+.frame-bar > span { margin: 0 auto; transform: translateX(-16px);
+                  font: 500 10px var(--mono); letter-spacing: 0.22em;
+                  color: var(--text-3); }
+.frame-body { position: relative; aspect-ratio: 16 / 9; overflow: hidden; }
+.frame-body img { position: absolute; inset: 0; width: 100%; height: 100%;
+                  object-fit: cover; transform: scale(1); }
+.slide.is-active .frame-body img { transform: scale(1.035);
+                                   transition: transform 16s linear; }
+/* served by the app: the live console, rendered at a desktop viewport and
+   scaled into the window; the still stays underneath until it has loaded */
+.live-frame { position: absolute; left: 0; top: 0; width: 1440px; height: 810px;
+              border: 0; transform-origin: 0 0; pointer-events: none;
+              background: #0a0d11; opacity: 0;
+              transition: opacity 0.9s var(--ease); }
+.frame-body.is-live .live-frame { opacity: 1; }
+.frame-body.is-live.interactive .live-frame { pointer-events: auto; }
+.frame-body.is-live.interactive { outline: 1px solid var(--blue-soft); outline-offset: -1px; }
+.frame-bar { position: relative; }
+.interact { position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+            font: 500 11.5px var(--sans); letter-spacing: 0; color: var(--text-2);
+            padding: 3px 11px; border-radius: 999px; cursor: pointer;
+            border: 1px solid rgba(147, 161, 176, 0.22);
+            background: transparent;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.4s var(--ease) 0.6s, background 0.2s; }
+.frame.is-live .interact { opacity: 1; pointer-events: auto; }
+.interact:hover { color: var(--text); background: rgba(147, 161, 176, 0.1); }
+.interact[aria-pressed="true"] { color: var(--text); border-color: var(--blue-soft); }
+.interact:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.frame-bar .live-dot { display: none; width: 6px; height: 6px; border-radius: 50%;
+                       background: var(--blue); margin-right: 9px; vertical-align: 1px; }
+.frame.is-live .frame-bar .live-dot { display: inline-block; }
+.shot-cap { margin-top: clamp(18px, 3vh, 30px);
+            font: 500 clamp(11px, 1.1vw, 14px) var(--mono);
+            letter-spacing: 0.3em; color: var(--text-2);
+            text-indent: 0.3em; }
+/* the build stack - a challenge requirement, staged as a monochrome
+   logo wall: official marks, one gray voice, labels beneath */
+.lwall { display: grid; grid-template-columns: repeat(6, 1fr);
+         column-gap: clamp(26px, 4vw, 76px); row-gap: clamp(18px, 3vh, 30px);
+         margin-top: clamp(22px, 3.6vh, 40px);
+         width: min(1020px, 74vw, 102vh); }
+.lchip { display: flex; flex-direction: column; align-items: center; gap: 11px;
+         color: var(--text-2); }
+.lg { width: clamp(22px, 2.3vw, 30px); height: clamp(22px, 2.3vw, 30px); }
+.lg-w { display: flex; align-items: center; justify-content: center;
+        height: clamp(24px, 2.5vw, 32px); }
+.lg-t { font: 500 clamp(8px, 0.78vw, 10px) var(--mono);
+        letter-spacing: 0.22em; color: var(--text-3); white-space: nowrap; }
+.lfoot { margin-top: clamp(16px, 2.8vh, 28px);
+         font: 500 clamp(9px, 0.9vw, 12px) var(--mono);
+         letter-spacing: 0.2em; color: var(--text-3); line-height: 2; }
+.lfoot b { color: var(--text-2); font-weight: 500; }
+@media (max-width: 900px) { .lwall { grid-template-columns: repeat(4, 1fr); } }
+.shot-missing { font: 500 clamp(12px, 1.2vw, 15px) var(--mono);
+                letter-spacing: 0.22em; color: var(--text-3); line-height: 2.2;
+                padding: 12vh 0; text-align: center; }
+.shot-missing b { color: var(--text-2); font-weight: 500; }
+
+/* --- s5: the pipeline, as pure typography ------------------------------------- */
+.flow { display: flex; align-items: flex-start; flex-wrap: wrap;
+        justify-content: center;
+        column-gap: clamp(14px, 1.9vw, 40px); row-gap: 32px;
+        margin-top: clamp(38px, 7vh, 72px); }
+.fl { text-align: center; }
+.fl .fl-n { font: 500 10px var(--mono); letter-spacing: 0.3em;
+            color: var(--text-3); margin-bottom: 10px; }
+.fl .fl-k { font: 600 clamp(13px, 1.45vw, 23px) var(--mono);
+            letter-spacing: 0.04em; color: var(--text); white-space: nowrap; }
+.fl .fl-v { font: 400 clamp(9px, 0.9vw, 13px) var(--mono);
+            letter-spacing: 0.18em; color: var(--text-3); margin-top: 10px;
+            white-space: nowrap; }
+.fl.hot .fl-k { color: var(--blue); }
+.fl-arrow { font: 400 clamp(17px, 1.9vw, 28px) var(--mono); color: var(--text-3);
+            transform: translateY(0.05em); }
+
+/* --- s6: the wide chart - four ways to model risk, one clears the bar --------- */
+.mono-title { font-family: var(--mono); font-weight: 600; letter-spacing: -0.02em;
+              font-size: clamp(40px, 6vw, 96px); white-space: nowrap; }
+.wchart { width: min(1280px, 90vw); margin: clamp(24px, 4vh, 42px) auto 0; }
+.wc-title { font: 500 clamp(10px, 1vw, 13px) var(--mono); letter-spacing: 0.28em;
+            color: var(--text-2); margin-bottom: clamp(20px, 3.4vh, 36px);
+            text-indent: 0.28em; }
+/* zero = the ESA carry-forward baseline; up is better. Scale: 22 units,
+   zero sits 9 from the top (headroom over +7.4), 13 below (room to -12). */
+.wc-plot { position: relative; height: min(42vh, 400px); }
+.wzero { position: absolute; left: 0; right: 0; top: 40.9%; height: 1px;
+         background: var(--text-2); opacity: 0.9; }
+.wzero span { position: absolute; left: 0; top: -1.9em;
+              font: 500 clamp(10px, 1vw, 13px) var(--mono);
+              letter-spacing: 0.2em; color: var(--text-2); }
+.wzero span b { color: var(--text); font-weight: 500; }
+.wcols { position: absolute; inset: 0; display: flex;
+         justify-content: space-around; }
+.wcol { position: relative; flex: 1; }
+.wbar { position: absolute; left: 50%; transform: translateX(-50%);
+        width: clamp(60px, 7vw, 124px); height: 0; border-radius: 1px;
+        transition: height 1.4s var(--ease) var(--d, 0.4s); }
+.wbar.pos { bottom: 59.1%; background: #5c6875; }
+.wbar.neg { top: 40.9%; background: #39434e; }
+.wcol.us .wbar { background: var(--blue); }
+.is-in .wbar { height: calc(var(--v) / 22 * 100%); }
+.wc-val { position: absolute; left: 50%; transform: translateX(-50%);
+          display: inline-flex; align-items: center;
+          font: 500 clamp(17px, 2vw, 30px) var(--mono);
+          font-variant-numeric: tabular-nums; color: var(--text-2);
+          white-space: nowrap;
+          opacity: 0; transition: opacity 0.6s var(--ease) 1.5s; }
+.is-in .wc-val { opacity: 1; }
+.wc-val.pos { bottom: calc(59.1% + var(--v) / 22 * 100% + 12px); }
+.wc-val.neg { top: calc(40.9% + var(--v) / 22 * 100% - 1.55em); }
+.wcol.us .wc-val { color: var(--blue); }
+.wlabels { display: flex; justify-content: space-around;
+           border-top: 1px solid var(--border);
+           padding-top: 16px; }
+.wlab { flex: 1; font: 500 clamp(10px, 1vw, 13px) var(--mono);
+        letter-spacing: 0.18em; color: var(--text); line-height: 1.9; }
+.wlab small { display: block; font-size: 0.8em; color: var(--text-3);
+              letter-spacing: 0.14em; }
+.wlab.us { color: var(--blue); }
+.wfoot { margin-top: clamp(16px, 2.6vh, 28px);
+         font: 500 clamp(9px, 0.9vw, 12px) var(--mono);
+         letter-spacing: 0.2em; color: var(--text-3); line-height: 2.1; }
+.wfoot b { color: var(--text-2); font-weight: 500; }
+.wfoot .hot { color: var(--blue); }
+
+/* --- s9: maneuver morph ---------------------------------------------------------- */
+.morph { display: flex; align-items: center; justify-content: center;
+         gap: clamp(20px, 3.4vw, 52px);
+         margin-top: clamp(28px, 5.5vh, 54px); font-variant-numeric: tabular-nums; }
+.morph .m-from { font: 500 clamp(44px, 7vw, 108px) var(--mono); color: var(--text-3);
+                 letter-spacing: -0.03em; }
+.morph .m-arrow { font: 400 clamp(26px, 3.8vw, 52px) var(--mono); color: var(--text-3); }
+.morph .m-to { display: inline-flex; align-items: center; gap: 0.18em;
+               font: 500 clamp(62px, 10.5vw, 170px) var(--mono); color: var(--blue);
+               letter-spacing: -0.04em; }
+.morph .m-to small { font-size: 0.42em; color: var(--text-2); letter-spacing: 0; }
+.pcline { font: 500 clamp(13px, 1.45vw, 19px) var(--mono); letter-spacing: 0.24em;
+          color: var(--text-2); margin-top: 20px; text-indent: 0.24em; }
+.pcline b { color: var(--blue); font-weight: 500; }
+
+/* --- Time Machine: the day it happened ----------------------------------------------- */
+.tm-pair { font-weight: 650; font-size: clamp(44px, 6.8vw, 124px); line-height: 1.02;
+           letter-spacing: -0.03em; white-space: nowrap; }
+.tm-pair .x { font-weight: 200; color: var(--critical); padding: 0 0.16em; }
+.tm-foot { margin-top: clamp(22px, 4vh, 44px); }
+.tm-foot div + div { margin-top: 2px; }
+
+/* --- 2009: the two orbits over the night side, full bleed ------------------------------ */
+.xing { justify-content: space-between;
+        padding-top: clamp(40px, 8vh, 96px); padding-bottom: clamp(24px, 4.6vh, 54px); }
+.xing-head, .xing-foot { position: relative; z-index: 1; display: flex; flex-direction: column;
+                         align-items: center; text-shadow: 0 0 22px rgba(5, 7, 12, 0.95); }
+.xing .rows { margin-top: 0; }
+.xing .row { font-size: min(2.6vw, 3.8vh, 40px); max-width: 40ch; }
+
+/* --- schematics (false alarms, avoidance): hairlines, mono labels, no numbers ---------- */
+.schem { display: block; width: min(1100px, 76vw, 112vh); height: auto; overflow: visible;
+         margin: clamp(22px, 4vh, 44px) auto 0; }
+.schem text { font: 500 11px var(--mono); letter-spacing: 0.2em; fill: var(--text-3); }
+.schem text.hot { fill: var(--blue); }
+.schem text.crit { fill: var(--critical); }
+.schem text.lead { font-size: 12px; fill: var(--blue); }
+.schem .axis { stroke: var(--border); }
+.schem .thresh { stroke: #5c6875; stroke-dasharray: 5 6; }
+.schem .flag-cf { stroke: #5c6875; }
+.schem .flag-e { stroke: var(--blue); }
+.schem g[data-step] { transform-box: fill-box; }
+.ew-curve { fill: none; stroke: var(--text); stroke-width: 1.6; stroke-linecap: round;
+            stroke-dasharray: 1000; stroke-dashoffset: 1000;
+            transition: stroke-dashoffset 1.8s var(--ease) 0.1s; }
+.is-on .ew-curve { stroke-dashoffset: 0; }
+
+.act .track { stroke: #46525f; stroke-width: 1.2; }
+.act .ring { fill: none; stroke: var(--critical); stroke-width: 1.2; stroke-dasharray: 3 5;
+             transition: stroke 0.8s var(--ease); }
+.act .p { fill: var(--text); transition: transform 1.6s var(--ease) 0.25s, fill 0.8s var(--ease) 0.25s; }
+.act .s { fill: #93a1b0; }
+.act .trail { stroke: var(--blue); stroke-width: 1.6; stroke-linecap: round;
+              stroke-dasharray: 160; stroke-dashoffset: 160;
+              transition: stroke-dashoffset 1.6s var(--ease) 0.25s; }
+.act:has(.act-after.is-on) .p { transform: translate(147px, -29.4px); fill: var(--blue); }
+.act:has(.act-after.is-on) .ring { stroke: #5c6875; }
+.act:has(.act-after.is-on) .trail { stroke-dashoffset: 0; }
+.act .burn { fill: var(--blue); }
+
+/* --- Protect a satellite: a stopwatch sweep around the one number --------------------- */
+.watch { position: relative; display: grid; place-items: center;
+         width: min(27vh, 280px); aspect-ratio: 1; margin: 0 auto; }
+.watch svg { position: absolute; inset: 0; width: 100%; height: 100%;
+             transform: rotate(-90deg); overflow: visible; }
+.watch .w-track { fill: none; stroke: var(--border); stroke-width: 0.5; }
+.watch .w-arc { fill: none; stroke: var(--blue); stroke-width: 0.6; stroke-linecap: round;
+                stroke-dasharray: 1000; stroke-dashoffset: 1000;
+                transition: stroke-dashoffset 2.2s cubic-bezier(0.5, 0, 0.25, 1) 0.5s; }
+.is-in .watch .w-arc { stroke-dashoffset: 0; }
+.watch .w-num { font: 300 min(10vw, 12.5vh, 132px) var(--sans); letter-spacing: -0.04em;
+                line-height: 1; font-variant-numeric: tabular-nums; }
+.watch .w-unit { font: 500 clamp(10px, 1vw, 13px) var(--mono); letter-spacing: 0.32em;
+                 color: var(--text-2); margin-top: 10px; text-indent: 0.32em; }
+.watch .w-in { display: flex; flex-direction: column; align-items: center; }
+
+/* --- s11: the numbers, unboxed ------------------------------------------------------ */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr);
+         gap: clamp(38px, 6.5vh, 74px) clamp(44px, 6vw, 120px);
+         margin-top: clamp(40px, 7vh, 72px); }
+.stat .s-v { font: 500 clamp(38px, 5vw, 76px) var(--mono);
+             font-variant-numeric: tabular-nums; letter-spacing: -0.035em;
+             color: var(--text); line-height: 1;
+             display: flex; justify-content: center; align-items: center; }
+.stat .s-k { font: 500 clamp(10px, 1vw, 13px) var(--mono); letter-spacing: 0.26em;
+             color: var(--text-3); margin-top: 15px; }
+.stat.hot .s-v { color: var(--blue); }
+@media (max-width: 760px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+/* --- s12: finale ----------------------------------------------------------------------- */
+.finale-mark { width: clamp(220px, 36vh, 380px); height: clamp(220px, 36vh, 380px); }
+.finale-word {
+  font-weight: 650; font-size: clamp(46px, 7.4vw, 112px);
+  letter-spacing: 0.06em; line-height: 1; margin-top: clamp(6px, 1.4vh, 20px);
+  opacity: 0; transform: translateY(18px); filter: blur(6px);
+  transition: opacity 1.1s var(--ease), transform 1.1s var(--ease), filter 1.1s var(--ease);
+}
+.finale-tag {
+  font: 500 clamp(11px, 1.2vw, 15px) var(--mono); letter-spacing: 0.52em;
+  color: var(--text-3); margin-top: 18px; text-indent: 0.52em;
+  opacity: 0; transform: translateY(12px);
+  transition: opacity 1.1s var(--ease) 0.25s, transform 1.1s var(--ease) 0.25s;
+}
+.finale-tools {
+  font: 500 clamp(9px, 0.85vw, 12px) var(--mono); letter-spacing: 0.24em; line-height: 2.2;
+  color: var(--text-3); margin-top: clamp(26px, 5vh, 54px); text-indent: 0.24em; max-width: 92vw;
+  opacity: 0; transition: opacity 1.2s var(--ease) 0.7s;
+}
+.finale-tools b { color: var(--text-2); font-weight: 500; }
+.finale.lit .finale-word, .finale.lit .finale-tag { opacity: 1; transform: none; filter: none; }
+.finale.lit .finale-tools { opacity: 1; }
+.finale.reset .finale-word, .finale.reset .finale-tag, .finale.reset .finale-tools { transition: none; }
+
+/* --- HUD: orbit-dot progress -------------------------------------------------------------- */
+.hud { position: fixed; inset: auto 0 0 0; height: 0; pointer-events: none; z-index: 5;
+       transition: opacity 0.6s var(--ease); }
+body.idle .hud { opacity: 0; }
+.hud .dots { position: absolute; left: 50%; bottom: 20px;
+             transform: translateX(-50%); display: flex; gap: 11px; }
+.hud .dots i { width: 5px; height: 5px; border-radius: 50%;
+               background: var(--border);
+               transition: background 0.4s var(--ease), transform 0.4s var(--ease); }
+.hud .dots i.past { background: var(--text-3); }
+.hud .dots i.on { background: var(--blue); transform: scale(1.35); }
+.hud .count { position: absolute; right: 18px; bottom: 14px;
+              font: 500 11px var(--mono); letter-spacing: 0.3em; color: var(--text-3); }
+.hint { position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%);
+        font: 500 11px var(--mono); letter-spacing: 0.3em; color: var(--text-3);
+        z-index: 5; transition: opacity 0.6s var(--ease); }
+body.moved .hint { opacity: 0; }
+
+/* --- everyday infrastructure: a constellation passes overhead, handing each
+       service from one satellite to the next ------------------------------- */
+.infra { display: block; width: min(1120px, 86vw, 128vh); height: auto; overflow: visible;
+         margin: clamp(18px, 3.4vh, 38px) auto 0; }
+.infra .earth { fill: url(#earth-fill); }
+.infra .limb { fill: none; stroke: var(--blue); stroke-opacity: 0.55; stroke-width: 1.2; }
+.infra .orbit { fill: none; stroke: #2f3b49; stroke-dasharray: 2 7; }
+.infra .beam { stroke: var(--blue); stroke-width: 1.3; stroke-linecap: round; }
+.infra .pulse { fill: #a9cdff; }
+.infra .icon { fill: none; stroke: var(--blue); stroke-width: 1.5; stroke-linecap: round;
+               stroke-linejoin: round; }
+.infra .icon .solid { fill: var(--blue); stroke: none; }
+.infra text { font: 500 12.5px var(--mono); letter-spacing: 0.18em; fill: var(--text); }
+.infra .svc { opacity: 0; transition: opacity 0.8s var(--ease) var(--d, 0s); }
+.is-in .infra .svc { opacity: 1; }
+
+
+/* --- 2021: the station over the night side, the debris streaming past ------------------ */
+.stn { justify-content: flex-start; padding-top: clamp(40px, 8.5vh, 100px); }
+.stn-head { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+            text-shadow: 0 0 24px rgba(5, 7, 12, 0.9); }
+.stn-head .sub { max-width: 62ch; margin-top: clamp(12px, 2vh, 22px); }
+.stn-foot { position: absolute; z-index: 1; left: 0; right: 0; bottom: clamp(22px, 4.5vh, 52px);
+            text-shadow: 0 0 14px rgba(5, 7, 12, 0.95); }
+
+/* --- VIGIL against ESA's own AI: the cut each made against the same baseline, up is better */
+.vs { width: min(780px, 72vw, 112vh); margin: clamp(24px, 4.4vh, 48px) auto 0; }
+.vs-title { font: 500 clamp(10px, 1vw, 13px) var(--mono); letter-spacing: 0.26em; color: var(--text-2);
+            text-indent: 0.26em; margin-bottom: clamp(16px, 2.8vh, 30px); }
+.vs-title b { color: var(--text); font-weight: 500; }
+.vs-plot { position: relative; height: min(34vh, 330px); display: flex; justify-content: space-around;
+           border-bottom: 1px solid var(--text-2); }
+.vs-col { width: 40%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.vs-bar { width: clamp(76px, 9vw, 150px); height: 0; border-radius: 2px 2px 0 0; background: #5c6875;
+          transition: height 1.4s var(--ease) var(--d, 0.5s); }
+.is-in .vs-bar { height: calc(var(--v) / 5.4 * (100% - 4.6em)); }
+.vs-col.us .vs-bar { background: linear-gradient(180deg, #4b97f0, #2a6fc4);
+                     box-shadow: 0 0 70px rgba(57, 135, 229, 0.32); }
+.vs-val { display: inline-flex; align-items: baseline; margin-bottom: 14px;
+          font: 500 clamp(30px, 3.6vw, 58px) var(--mono); font-variant-numeric: tabular-nums;
+          letter-spacing: -0.03em; color: var(--text-2);
+          opacity: 0; transition: opacity 0.6s var(--ease) calc(var(--d, 0.5s) + 0.8s); }
+.is-in .vs-val { opacity: 1; }
+.vs-col.us .vs-val { color: var(--blue); }
+.vs-labels { display: flex; justify-content: space-around; padding-top: 16px; }
+.vs-lab { width: 40%; font: 500 clamp(11px, 1.15vw, 16px) var(--mono); letter-spacing: 0.22em;
+          color: var(--text); line-height: 1.9; }
+.vs-lab small { display: block; font-size: 0.74em; letter-spacing: 0.16em; color: var(--text-3); }
+.vs-lab.us { color: var(--blue); }
+
+/* --- false alarms: the result under the schematic --------------------------------------- */
+.ew-result { display: flex; align-items: center; justify-content: center;
+             gap: clamp(18px, 2.4vw, 36px); margin-top: clamp(12px, 2.4vh, 26px); }
+.ew-x { display: inline-flex; align-items: baseline;
+        font: 500 clamp(52px, 7.4vw, 118px) var(--mono); color: var(--blue);
+        letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ew-cap { text-align: left; font: 500 clamp(11px, 1.15vw, 15px) var(--mono);
+          letter-spacing: 0.22em; color: var(--text-2); line-height: 1.9; }
+.ew-cap b { color: var(--text); font-weight: 500; }
+
+/* --- the problem: the catalog around Earth, the type beside it ------------------------ */
+.swarm { align-items: flex-start; text-align: left;
+         padding-left: calc((100vw - min(100vw, 177.78vh)) / 2 + min(100vw, 177.78vh) * 0.065); }
+.swarm-text { position: relative; z-index: 1; max-width: min(46vw, 82vh);
+              text-shadow: 0 0 22px rgba(5, 7, 12, 0.9); }
+.swarm .mega { font-size: min(10vw, 17vh, 210px); justify-content: flex-start; }
+.swarm .mega-label { text-indent: 0; }
+.swarm .rows { align-items: flex-start; }
+.swarm .row { font-size: min(2.3vw, 3.6vh, 36px); max-width: 30ch; }
+.swarm-key { position: absolute; z-index: 1; bottom: clamp(26px, 5.5vh, 60px);
+             right: calc((100vw - min(100vw, 177.78vh)) / 2 + min(100vw, 177.78vh) * 0.05);
+             text-align: right; font: 500 clamp(9px, 0.85vw, 12px) var(--mono);
+             letter-spacing: 0.22em; color: var(--text-3); line-height: 2.1; }
+.swarm-key span { margin-left: 2.2em; white-space: nowrap; }
+.swarm-key i { display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+               margin-right: 0.8em; vertical-align: 0.05em; }
+.swarm-key .k-sat { background: #96c4ff; }
+.swarm-key .k-deb { background: #d6dee8; }
+
+/* --- space weather: the Sun, full bleed, the type above and below it ---------------- */
+/* the type centres in the space right of the Sun (--sw-left: its limb, set by
+   the scene), so the Sun frames it instead of crowding it */
+.sw { justify-content: space-between;
+      padding: clamp(36px, 8.5vh, 104px) clamp(24px, 3.5vw, 72px) clamp(26px, 5.5vh, 64px)
+               calc(var(--sw-left, 14vw) + clamp(20px, 2.5vw, 48px)); }
+.sw-cv { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.sw-head, .sw-foot { position: relative; z-index: 1; display: flex; flex-direction: column;
+                     align-items: center; text-shadow: 0 0 22px rgba(5, 7, 12, 0.85); }
+.sw-head .statement { max-width: none; font-size: clamp(30px, min(4.5vw, 6.8vh), 74px); }
+.sw-head .sub { margin-top: clamp(10px, 1.8vh, 20px); max-width: 92ch; }
+.sw-stats { display: grid; grid-template-columns: repeat(3, auto); justify-content: center;
+            column-gap: clamp(36px, 6.5vw, 128px); }
+.sw-v { display: flex; align-items: baseline; justify-content: center; gap: 0.12em;
+        font: 500 clamp(30px, min(3.9vw, 6.4vh), 66px) var(--mono);
+        font-variant-numeric: tabular-nums; letter-spacing: -0.03em; line-height: 1;
+        color: var(--text); }
+.sw-v small { font-size: 0.4em; letter-spacing: 0.1em; color: var(--text-2); }
+.sw-v .x { font-weight: 400; color: var(--text-2); margin-right: 0.04em; }
+.sw-stat.hot .sw-v { color: #c3a6ff; }
+.sw-k { margin-top: clamp(10px, 1.6vh, 16px);
+        font: 500 clamp(10px, 0.95vw, 13px) var(--mono); letter-spacing: 0.24em;
+        color: var(--text-2); line-height: 1.75; }
+.sw-k small { display: block; font-size: 0.86em; letter-spacing: 0.16em; color: var(--text-3); }
+.sw-foot .wfoot { margin-top: clamp(14px, 2.6vh, 28px); }
+.sw-labels { position: absolute; inset: 0; pointer-events: none; z-index: 1;
+             opacity: 0; transition: opacity 1s var(--ease) 0.8s; }
+.is-in .sw-labels { opacity: 1; }
+.sw-lab { position: absolute; transform: translate(8px, -50%); white-space: nowrap;
+          font: 500 clamp(9px, 0.82vw, 12px) var(--mono); letter-spacing: 0.24em;
+          text-shadow: 0 0 12px rgba(5, 7, 12, 0.95); }
+.sw-lab.to-left { transform: translate(calc(-100% - 8px), -50%); }
+.sw-lab.to-center { transform: translate(-50%, -50%); }
+.sw-lab.wind { color: #ffd2a6; }
+.sw-lab.shield { color: #a9cdff; }
+.sw-lab.aurora { color: #9dffcf; }
+.sw-lab.air { color: #cdb4ff; }
+
+@media (prefers-reduced-motion: reduce) {
+  .infra .svc, .sw-labels, .vs-bar, .vs-val
+    { transition-duration: 0.01s !important; animation: none !important; }
+  .slide, .anim, [data-step], .wbar, .wc-val, .k, .od-col,
+  .finale-word, .finale-tag, .finale-tools, .shot img, .live-frame, .ew-curve, .w-arc,
+  .act .p, .act .ring, .act .trail
+    { transition-duration: 0.01s !important; transition-delay: 0s !important;
+      animation: none !important; }
+}
+</style>
+</head>
+<body>
+<canvas id="space" aria-hidden="true"></canvas>
+
+<!-- 1 · TITLE ================================================================ -->
+<section class="slide" id="s1" aria-label="Title">
+  <div class="anim" style="--d:0.1s">
+    <svg viewBox="0 0 24 24" style="width:clamp(150px,26vh,230px);height:auto" aria-hidden="true"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="#9aa8b8" stroke-width="1.2"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="#5c6875" stroke-width="1.2"/></g><circle cx="12" cy="12" r="1.3" fill="#9aa8b8"/><circle class="mk-walk" data-ph="0" cx="19.2" cy="13.8" r="0.95" fill="#dbe2ea"/></svg>
+  </div>
+  <h1 class="display anim" style="--d:0.25s; margin-top: 34px; letter-spacing: 0.05em;">KESSLER</h1>
+  <p class="statement anim" style="--d:0.45s; margin-top: 30px;">An AI watch officer for the satellites <b>you use every day.</b></p>
+  <div class="credit anim" style="--d:0.75s">NICOLAS VAZQUEZ</div>
+</section>
+
+<!-- 2 · YOU ALREADY USED ONE: space is infrastructure =========================== -->
+<section class="slide" id="s1b" aria-label="Satellites in everyday life">
+  <p class="statement anim" style="--d:0.1s">You’ve already used <b>a satellite today.</b></p>
+  <svg class="infra anim" id="infra" style="--d:0.25s" viewBox="0 0 1000 400" role="img"
+       aria-label="A constellation of satellites orbits overhead, beaming down to everyday things: the blue dot on your map, the weather forecast, your calls and texts, card payments, and the electricity grid, which all keep time by GPS.">
+    <defs>
+      <linearGradient id="earth-fill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#0d1a2b"/>
+        <stop offset="1" stop-color="#05070c"/>
+      </linearGradient>
+      <linearGradient id="sat-panel" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#21426d"/>
+        <stop offset="1" stop-color="#0c1a2e"/>
+      </linearGradient>
+      <linearGradient id="sat-bus" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#465464"/>
+        <stop offset="1" stop-color="#171f29"/>
+      </linearGradient>
+      <!-- one satellite, cloned into orbit by the script: solar wings with
+           their cells, the bus, and a dish facing Earth -->
+      <g id="ksat" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M-9 0H-13M9 0H13" stroke="#93a1b0" stroke-width="1.2"/>
+        <rect x="-37" y="-6" width="24" height="12" rx="0.8" fill="url(#sat-panel)" stroke="#6d7c8c" stroke-width="1"/>
+        <rect x="13" y="-6" width="24" height="12" rx="0.8" fill="url(#sat-panel)" stroke="#6d7c8c" stroke-width="1"/>
+        <path d="M-31 -6V6M-25 -6V6M-19 -6V6M-37 0H-13M19 -6V6M25 -6V6M31 -6V6M13 0H37" stroke="#4f6a8c" stroke-width="0.6"/>
+        <rect x="-9" y="-7.5" width="18" height="15" rx="1.6" fill="url(#sat-bus)" stroke="#b4c0cd" stroke-width="1.1"/>
+        <path d="M-6.6 -4.8H6.6" stroke="#dbe2ea" stroke-opacity="0.45" stroke-width="0.9"/>
+        <path d="M-6.5 13.5Q0 6.8 6.5 13.5" stroke="#c3ccd6" stroke-width="1.2"/>
+        <path d="M0 7.5V15.2" stroke="#93a1b0" stroke-width="0.8"/>
+      </g>
+    </defs>
+    <path class="orbit" d="M0 200 Q 500 60 1000 200"/>
+    <path class="earth" d="M-60 400 Q 500 250 1060 400 Z"/>
+    <path class="limb" d="M-60 400 Q 500 250 1060 400"/>
+    <g id="infra-beams"></g>
+    <g id="infra-sats"></g>
+    <g class="svc" style="--d:0.45s">
+      <g class="icon" transform="translate(150 324)"><path d="M0 -14 C 7.5 -14 11 -9 11 -3.5 C 11 4 0 14 0 14 C 0 14 -11 4 -11 -3.5 C -11 -9 -7.5 -14 0 -14 Z"/><circle class="solid" cx="0" cy="-3.5" r="3.6"/></g>
+      <text x="150" y="376" text-anchor="middle">MAPS<tspan x="150" dy="18">YOUR BLUE DOT</tspan></text>
+    </g>
+    <g class="svc" style="--d:0.53s">
+      <g class="icon" transform="translate(330 302)"><path d="M-13 9 H 12 a 6.5 6.5 0 0 0 -0.6 -13 a 9.5 9.5 0 0 0 -17.8 -1.6 a 7.2 7.2 0 0 0 -7.6 14.6 Z"/><line x1="-6" y1="15" x2="-8" y2="19"/><line x1="1" y1="15" x2="-1" y2="19"/><line x1="8" y1="15" x2="6" y2="19"/></g>
+      <text x="330" y="354" text-anchor="middle">WEATHER<tspan x="330" dy="18">THE FORECAST</tspan></text>
+    </g>
+    <g class="svc" style="--d:0.61s">
+      <g class="icon" transform="translate(500 295)"><rect x="-8" y="-14" width="16" height="28" rx="3"/><line x1="-3" y1="9" x2="3" y2="9"/><path d="M13 -11 a 9 9 0 0 1 0 11"/><path d="M17.5 -15 a 15 15 0 0 1 0 19"/></g>
+      <text x="500" y="347" text-anchor="middle">CALLS &amp; TEXTS<tspan x="500" dy="18">SYNCED BY GPS</tspan></text>
+    </g>
+    <g class="svc" style="--d:0.69s">
+      <g class="icon" transform="translate(670 302)"><rect x="-15" y="-10" width="30" height="20" rx="3"/><line x1="-15" y1="-4" x2="15" y2="-4"/><line x1="-9" y1="4" x2="-1" y2="4"/></g>
+      <text x="670" y="354" text-anchor="middle">CARD PAYMENTS<tspan x="670" dy="18">TIMED BY GPS</tspan></text>
+    </g>
+    <g class="svc" style="--d:0.77s">
+      <g class="icon" transform="translate(850 324)"><path d="M3 -15 L -8 2 H -1 L -4 15 L 8 -3 H 1 Z"/></g>
+      <text x="850" y="376" text-anchor="middle">ELECTRICITY<tspan x="850" dy="18">KEPT IN SYNC BY GPS</tspan></text>
+    </g>
+  </svg>
+  <div class="wfoot anim" style="--d:0.85s; margin-top: clamp(8px,1.6vh,18px)">GPS ALONE HAS ADDED ABOUT <b>$1.4 TRILLION</b> TO THE U.S. ECONOMY ·
+    AN OUTAGE COULD COST <b>$1 BILLION A DAY</b> · NIST / RTI INTERNATIONAL, 2019</div>
+</section>
+
+<!-- 3 · THE PROBLEM: every tracked object, live ============================== -->
+<section class="slide swarm" id="s2" aria-label="The problem: more than 33,000 objects in orbit, and the Kessler syndrome">
+  <canvas class="sw-cv" id="swarm-cv" aria-hidden="true"></canvas>
+  <div class="swarm-text">
+    <div class="anim" style="--d:0.1s">
+      <div class="mega" data-count="33166" data-live="catalog" data-dur="2400">0</div>
+      <div class="mega-label">OBJECTS ON ORBIT · TRACKED LIVE</div>
+    </div>
+    <div class="rows">
+      <div class="row dim" data-step="1">Working satellites. Dead ones. Rocket bodies. Nearly seventy years of debris.</div>
+      <div class="row" data-step="2">One collision, at <b>ten times the speed of a bullet</b>, can shatter
+        two satellites into thousands of fragments.</div>
+      <div class="row cascade" data-step="3">Each fragment can trigger the next.
+        <b>That runaway has a name: the Kessler syndrome.</b></div>
+    </div>
+  </div>
+  <div class="swarm-key anim" style="--d:0.7s" aria-hidden="true">
+    <div><span><i class="k-sat"></i>SATELLITES</span><span><i class="k-deb"></i>DEBRIS AND ROCKET BODIES</span></div>
+    <div id="swarm-src">AN ILLUSTRATIVE CATALOG · ALTITUDES COMPRESSED</div>
+  </div>
+</section>
+
+<!-- 4 · IT IS ALREADY HAPPENING TO PEOPLE: 15 November 2021 (NASA: the crew
+     sheltered in Crew Dragon and Soyuz from just before 2 to about 4 a.m. EST;
+     the station passed through or near the cloud every 90 minutes) ========= -->
+<section class="slide stn" id="s2a" aria-label="November 2021: the space station crew takes shelter">
+  <canvas class="sw-cv" id="st-cv" role="img"
+          aria-label="The International Space Station over the night side of Earth at sunrise, with a Crew Dragon and a Soyuz docked, as streaks of debris pass by."></canvas>
+  <div class="stn-head">
+    <p class="statement anim" style="--d:0.1s; max-width: 28ch">Seven astronauts. <b>Two hours in their escape capsules.</b></p>
+    <p class="sub anim" style="--d:0.26s">In November 2021, a missile test shattered a dead satellite into
+      1,500+ trackable fragments. The station swept past the cloud every 90 minutes.</p>
+  </div>
+  <div class="wfoot stn-foot anim" style="--d:0.5s"><b>15 NOVEMBER 2021</b> · NASA · U.S. SPACE COMMAND · REUTERS</div>
+</section>
+
+<!-- THE GAP, AND THE ANSWER =================================================== -->
+<section class="slide" id="s3" aria-label="The gap, and the answer">
+  <p class="row dim anim" style="--d:0.2s">Space agencies and mega&#8209;constellations
+    have <b>mission control.</b></p>
+  <p class="statement" data-step="1" id="blind-line"
+     style="margin-top: clamp(20px,3.6vh,40px)"><b>Everyone else flies blind.</b></p>
+  <p class="statement" data-step="2" style="margin-top: clamp(20px,3.6vh,40px)"><b>Kessler.<svg class="inmark" viewBox="0 0 24 24" aria-hidden="true"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="#9aa8b8" stroke-width="1.2"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="#5c6875" stroke-width="1.2"/></g><circle cx="12" cy="12" r="1.3" fill="#9aa8b8"/><circle class="mk-walk" data-ph="2.1" cx="19.2" cy="13.8" r="0.95" fill="#dbe2ea"/></svg></b>
+    Mission control for everyone else.</p>
+  <div class="chips">
+    <span class="chip" data-step="3">LIVE CATALOG · 33,000+ OBJECTS</span>
+    <span class="chip" data-step="3">SCREENED EVERY HOUR</span>
+    <span class="chip hot" data-step="3">AN AI THAT STANDS WATCH</span>
+  </div>
+</section>
+
+<!-- 3 · TIME MACHINE - it already happened ================================== -->
+<section class="slide xing" id="s2b" aria-label="Time Machine: Iridium 33 and Cosmos 2251">
+  <canvas class="sw-cv" id="xing-cv" role="img"
+          aria-label="Iridium 33 and Cosmos 2251 on their real orbits over the night side of Earth, meeting 789 kilometres above Siberia on 10 February 2009."></canvas>
+  <div class="xing-head">
+    <h2 class="tm-pair anim" style="--d:0.1s">Iridium 33<span class="x">×</span>Cosmos 2251</h2>
+    <div class="pcline anim" style="--d:0.26s; margin-top: clamp(14px,2.4vh,26px)"><b>10 FEBRUARY 2009</b> · ABOUT 789 KM ABOVE SIBERIA · 11.7 KM/S</div>
+  </div>
+  <div class="xing-foot">
+    <div class="rows">
+      <div class="row dim" data-step="1">A dead Russian satellite destroyed a working Iridium phone satellite:
+        <b>more than 2,000</b> cataloged fragments.</div>
+      <div class="row" data-step="2">Kessler replays the day, and <b>flags it
+        <span id="tm-lead">72</span> hours out.</b></div>
+    </div>
+    <div class="wfoot tm-foot">
+      <div data-step="1">FACTS · <b>NASA ORBITAL DEBRIS QUARTERLY NEWS, APRIL 2009</b> · FRAGMENT COUNT · <b>JULY 2011</b></div>
+      <div data-step="2"><span id="tm-prov">ORBITS <b>RECONSTRUCTED FROM PUBLISHED PARAMETERS</b></span>
+        · APPROACH SPED UP ABOUT 90× · <b>DEBRIS CLOUDS ILLUSTRATIVE</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · THE CONSOLE (the product, on stage) ==================================== -->
+<section class="slide" data-extended id="s4b" style="padding-bottom:52px" aria-label="The console">
+  <div class="frame anim" id="shot-frame" style="--d:0.2s">
+    <div class="frame-bar"><i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i>
+      <span aria-hidden="true"><em class="live-dot"></em><span id="shot-label">KESSLER · AI ORBITAL RISK</span></span>
+      <button type="button" class="interact" id="shot-interact" aria-pressed="false">Interact</button></div>
+    <div class="frame-body" id="shot-body">
+      <img id="shot-img" src="deck-shot.png" alt="The Kessler console">
+      <div class="shot-missing" id="shot-missing" hidden>
+        ADD THE PRODUCT STILL<br>
+        SAVE A FULL-RES SCREENSHOT AS <b>frontend/deck-shot.png</b>
+      </div>
+    </div>
+  </div>
+  <div class="lwall anim" style="--d:0.45s">
+    <div class="lchip" style="color:#4B8BBE"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.25.18l.9.2.73.26.59.3.45.32.34.34.25.34.16.33.1.3.04.26.02.2-.01.13V8.5l-.05.63-.13.55-.21.46-.26.38-.3.31-.33.25-.35.19-.35.14-.33.1-.3.07-.26.04-.21.02H8.77l-.69.05-.59.14-.5.22-.41.27-.33.32-.27.35-.2.36-.15.37-.1.35-.07.32-.04.27-.02.21v3.06H3.17l-.21-.03-.28-.07-.32-.12-.35-.18-.36-.26-.36-.36-.35-.46-.32-.59-.28-.73-.21-.88-.14-1.05-.05-1.23.06-1.22.16-1.04.24-.87.32-.71.36-.57.4-.44.42-.33.42-.24.4-.16.36-.1.32-.05.24-.01h.16l.06.01h8.16v-.83H6.18l-.01-2.75-.02-.37.05-.34.11-.31.17-.28.25-.26.31-.23.38-.2.44-.18.51-.15.58-.12.64-.1.71-.06.77-.04.84-.02 1.27.05zm-6.3 1.98l-.23.33-.08.41.08.41.23.34.33.22.41.09.41-.09.33-.22.23-.34.08-.41-.08-.41-.23-.33-.33-.22-.41-.09-.41.09zm13.09 3.95l.28.06.32.12.35.18.36.27.36.35.35.47.32.59.28.73.21.88.14 1.04.05 1.23-.06 1.23-.16 1.04-.24.86-.32.71-.36.57-.4.45-.42.33-.42.24-.4.16-.36.09-.32.05-.24.02-.16-.01h-8.22v.82h5.84l.01 2.76.02.36-.05.34-.11.31-.17.29-.25.25-.31.24-.38.2-.44.17-.51.15-.58.13-.64.09-.71.07-.77.04-.84.01-1.27-.04-1.07-.14-.9-.2-.73-.25-.59-.3-.45-.33-.34-.34-.25-.34-.16-.33-.1-.3-.04-.25-.02-.2.01-.13v-5.34l.05-.64.13-.54.21-.46.26-.38.3-.32.33-.24.35-.2.35-.14.33-.1.3-.06.26-.04.21-.02.13-.01h5.84l.69-.05.59-.14.5-.21.41-.28.33-.32.27-.35.2-.36.15-.36.1-.35.07-.32.04-.28.02-.21V6.07h2.09l.14.01zm-6.47 14.25l-.23.33-.08.41.08.41.23.33.33.23.41.08.41-.08.33-.23.23-.33.08-.41-.08-.41-.23-.33-.33-.23-.41-.08-.41.08z"/></svg></span><span class="lg-t">PYTHON 3</span></div>
+    <div class="lchip" style="color:#F7DF1E"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z"/></svg></span><span class="lg-t">JAVASCRIPT</span></div>
+    <div class="lchip" style="color:#E34F26"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/></svg></span><span class="lg-t">HTML5</span></div>
+    <div class="lchip" style="color:#8A63BF"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 0v20.16A3.84 3.84 0 0 0 3.84 24h16.32A3.84 3.84 0 0 0 24 20.16V3.84A3.84 3.84 0 0 0 20.16 0Zm14.256 13.08c1.56 0 2.28 1.08 2.304 2.64h-1.608c.024-.288-.048-.6-.144-.84-.096-.192-.288-.264-.552-.264-.456 0-.696.264-.696.84-.024.576.288.888.768 1.08.72.288 1.608.744 1.92 1.296q.432.648.432 1.656c0 1.608-.912 2.592-2.496 2.592-1.656 0-2.4-1.032-2.424-2.688h1.68c0 .792.264 1.176.792 1.176.264 0 .456-.072.552-.24.192-.312.24-1.176-.048-1.512-.312-.408-.912-.6-1.32-.816q-.828-.396-1.224-.936c-.24-.36-.36-.888-.36-1.536 0-1.44.936-2.472 2.424-2.448m5.4 0c1.584 0 2.304 1.08 2.328 2.64h-1.608c0-.288-.048-.6-.168-.84-.096-.192-.264-.264-.528-.264-.48 0-.72.264-.72.84s.288.888.792 1.08c.696.288 1.608.744 1.92 1.296.264.432.408.984.408 1.656.024 1.608-.888 2.592-2.472 2.592-1.68 0-2.424-1.056-2.448-2.688h1.68c0 .744.264 1.176.792 1.176.264 0 .456-.072.552-.24.216-.312.264-1.176-.048-1.512-.288-.408-.888-.6-1.32-.816-.552-.264-.96-.576-1.2-.936s-.36-.888-.36-1.536c-.024-1.44.912-2.472 2.4-2.448m-11.031.018c.711-.006 1.419.198 1.839.63.432.432.672 1.128.648 1.992H9.336c.024-.456-.096-.792-.432-.96-.312-.144-.768-.048-.888.24-.12.264-.192.576-.168.864v3.504c0 .744.264 1.128.768 1.128a.65.65 0 0 0 .552-.264c.168-.24.192-.552.168-.84h1.776c.096 1.632-.984 2.712-2.568 2.688-1.536 0-2.496-.864-2.472-2.472v-4.032c0-.816.24-1.44.696-1.848.432-.408 1.146-.624 1.857-.63"/></svg></span><span class="lg-t">CSS</span></div>
+    <div class="lchip" style="color:#58AEE0"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.678.521c-1.032-.92-2.28-.55-3.513.544a8.71 8.71 0 0 0-.547.535c-2.109 2.237-4.066 6.38-4.674 9.544.237.48.422 1.093.544 1.561a13.044 13.044 0 0 1 .164.703s-.019-.071-.096-.296l-.05-.146a1.689 1.689 0 0 0-.033-.08c-.138-.32-.518-.995-.686-1.289-.143.423-.27.818-.376 1.176.484.884.778 2.4.778 2.4s-.025-.099-.147-.442c-.107-.303-.644-1.244-.772-1.464-.217.804-.304 1.346-.226 1.478.152.256.296.698.422 1.186.286 1.1.485 2.44.485 2.44l.017.224a22.41 22.41 0 0 0 .056 2.748c.095 1.146.273 2.13.5 2.657l.155-.084c-.334-1.038-.47-2.399-.41-3.967.09-2.398.642-5.29 1.661-8.304 1.723-4.55 4.113-8.201 6.3-9.945-1.993 1.8-4.692 7.63-5.5 9.788-.904 2.416-1.545 4.684-1.931 6.857.666-2.037 2.821-2.912 2.821-2.912s1.057-1.304 2.292-3.166c-.74.169-1.955.458-2.362.629-.6.251-.762.337-.762.337s1.945-1.184 3.613-1.72C21.695 7.9 24.195 2.767 21.678.521m-18.573.543A1.842 1.842 0 0 0 1.27 2.9v16.608a1.84 1.84 0 0 0 1.835 1.834h9.418a22.953 22.953 0 0 1-.052-2.707c-.006-.062-.011-.141-.016-.2a27.01 27.01 0 0 0-.473-2.378c-.121-.47-.275-.898-.369-1.057-.116-.197-.098-.31-.097-.432 0-.12.015-.245.037-.386a9.98 9.98 0 0 1 .234-1.045l.217-.028c-.017-.035-.014-.065-.031-.097l-.041-.381a32.8 32.8 0 0 1 .382-1.194l.2-.019c-.008-.016-.01-.038-.018-.053l-.043-.316c.63-3.28 2.587-7.443 4.8-9.791.066-.069.133-.128.198-.194Z"/></svg></span><span class="lg-t">SQLITE</span></div>
+    <div class="lchip" style="color:#2496ED"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"/></svg></span><span class="lg-t">DOCKER</span></div>
+    <div class="lchip" style="color:#0BA895"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .0387C5.3729.0384.0003 5.3931 0 11.9988c-.001 6.6066 5.372 11.9628 12 11.9625 6.628.0003 12.001-5.3559 12-11.9625-.0003-6.6057-5.3729-11.9604-12-11.96m-.829 5.4153h7.55l-7.5805 5.3284h5.1828L5.279 18.5436q2.9466-6.5444 5.892-13.0896"/></svg></span><span class="lg-t">FASTAPI</span></div>
+    <div class="lchip" style="color:#35A8DB"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 20V10M5 10l-2.6 3M5 10l2.6 3M5 10V5l-2 2.2M5 5l2 2.2"/><path d="M12 20V7M12 7l-3 3.4M12 7l3 3.4M12 7V2.6l-2.3 2.5M12 2.6l2.3 2.5"/><path d="M19 20V12M19 12l-2.6 3M19 12l2.6 3M19 12V7.4l-2 2.2M19 7.4l2 2.2"/></svg></span><span class="lg-t">XGBOOST</span></div>
+    <div class="lchip" style="color:#4DABCF"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M10.315 4.876L6.3048 2.8517l-4.401 2.1965 4.1186 2.0683zm1.8381.9277l4.2045 2.1223-4.3622 2.1906-4.125-2.0718zm5.6153-2.9213l4.3193 2.1658-3.863 1.9402-4.2131-2.1252zm-1.859-.9329L12.021 0 8.1742 1.9193l4.0068 2.0208zm-3.0401 16.7443V24l4.7107-2.3507-.0053-5.3085zm4.7037-4.2057l-.0052-5.2528-4.6985 2.3356v5.2546zm5.6553-.9845v5.327l-4.0178 2.0052-.0029-5.3028zm0-1.8626V6.4214l-4.0253 2.001.0034 5.2633zM11.2062 11.571L8.0333 9.9756v6.895s-3.8804-8.2564-4.2399-8.998c-.0463-.0957-.2371-.2007-.2858-.2262C2.8118 7.2812.773 6.2485.773 6.2485V18.43l2.8204 1.5076v-6.3674s3.8392 7.3775 3.878 7.458c.0389.0807.4245.8582.8362 1.1314.5485.363 2.8992 1.7766 2.8992 1.7766z"/></svg></span><span class="lg-t">NUMPY</span></div>
+    <div class="lchip" style="color:#E70488"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.922 0h2.623v18.104h-2.623zm-4.126 12.94h2.623v2.57h-2.623zm0-7.037h2.623v5.446h-2.623zm0 11.197h2.623v5.446h-2.623zM4.456 5.896h2.622V24H4.455zm4.213 2.559h2.623v2.57H8.67zm0 4.151h2.623v5.447H8.67zm0-11.187h2.623v5.446H8.67Z"/></svg></span><span class="lg-t">PANDAS</span></div>
+    <div class="lchip" style="color:#D9C7B8"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.3041 3.541h-3.6718l6.696 16.918H24Zm-10.6082 0L0 20.459h3.7442l1.3693-3.5527h7.0052l1.3693 3.5528h3.7442L10.5363 3.5409Zm-.3712 10.2232 2.2914-5.9456 2.2914 5.9456Z"/></svg></span><span class="lg-t">CLAUDE API</span></div>
+    <div class="lchip" style="color:#EDEFF2"><span class="lg-w"><svg class="lg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.6035 0v24h4.9317V0zm9.8613 0v24h4.9317V0z"/></svg></span><span class="lg-t">ELEVENLABS</span></div>
+  </div>
+  <div class="lfoot anim" style="--d:0.62s">SGP4 PROPAGATION · <b>SPACE-TRACK + CELESTRAK</b> TLES · <b>ESA KELVINS</b> · 162,634 CDMS · 59K LINES · <b>NO FRONTEND FRAMEWORK</b></div>
+</section>
+
+<!-- 6 · PIPELINE ============================================================= -->
+<section class="slide" data-extended id="s5" aria-label="Live pipeline">
+  <p class="statement anim" style="--d:0.1s">From raw catalog to ranked risk, <b>every hour.</b></p>
+  <div class="flow">
+    <div class="fl" data-step="1">
+      <div class="fl-n">01</div>
+      <div class="fl-k">SPACE-TRACK + CELESTRAK</div>
+      <div class="fl-v">PUBLIC TLES · FULL CATALOG</div></div>
+    <span class="fl-arrow" data-step="2">→</span>
+    <div class="fl" data-step="2">
+      <div class="fl-n">02</div>
+      <div class="fl-k">SGP4 PROPAGATION</div>
+      <div class="fl-v">EVERY OBJECT · EVERY PASS</div></div>
+    <span class="fl-arrow" data-step="3">→</span>
+    <div class="fl" data-step="3">
+      <div class="fl-n">03</div>
+      <div class="fl-k">72-HOUR SCREEN</div>
+      <div class="fl-v">CLOSE-APPROACH SEARCH</div></div>
+    <span class="fl-arrow" data-step="4">→</span>
+    <div class="fl hot" data-step="4">
+      <div class="fl-n">04</div>
+      <div class="fl-k">15,000 CONJUNCTIONS</div>
+      <div class="fl-v">RANKED BY MODELED RISK</div></div>
+  </div>
+</section>
+
+<!-- 7 · VIGIL AGAINST ESA'S OWN AI. Figures: reports/vigil-lab-r2-sealed
+     (scored once, rules committed first) via backend/app/models/lab/benchmark.json;
+     ESA's AI, chosen from 5,000 models (the only one to beat the baseline on
+     both ESA's training and test data): Uriot et al. 2022, Astrodynamics 6:121-140, §6.1.
+     Each bar is the cut in ESA's official score against the same latest-risk
+     baseline (0.694): ESA's AI 0.684 (1.4%), VIGIL 0.661 (4.7%). ============= -->
+<section class="slide" id="s6" aria-label="VIGIL against ESA's own AI">
+  <p class="statement anim" style="--d:0.1s; max-width: 26ch">We put our risk model, VIGIL, up against <b>ESA’s own AI.</b></p>
+  <div class="vs anim" style="--d:0.3s" role="img"
+       aria-label="On ESA's official test, ESA's own AI improved on the standard baseline by 1.4 percent. VIGIL improved on it by 4.7 percent.">
+    <div class="vs-title">IMPROVEMENT OVER THE STANDARD METHOD · <b>UP IS BETTER</b></div>
+    <div class="vs-plot">
+      <div class="vs-col" style="--d:0.55s">
+        <div class="vs-val">+<span data-count="1.4" data-dec="1" data-dur="1200">0</span>%</div>
+        <div class="vs-bar" style="--v:1.4"></div>
+      </div>
+      <div class="vs-col us" style="--d:0.85s">
+        <div class="vs-val">+<span data-count="4.7" data-dec="1" data-dur="1500">0</span>%</div>
+        <div class="vs-bar" style="--v:4.7"></div>
+      </div>
+    </div>
+    <div class="vs-labels">
+      <div class="vs-lab">ESA’S OWN AI<small>CHOSEN FROM 5,000 MODELS</small></div>
+      <div class="vs-lab us">VIGIL<small>LOCKED BEFORE THE TEST</small></div>
+    </div>
+  </div>
+  <div class="wfoot" data-step="1">ESA’S OFFICIAL TEST SET · <b>2,167 REAL EVENTS</b> · ESA’S SCORE: VIGIL 0.661 · ESA’S AI 0.684 · STANDARD METHOD 0.694, LOWER IS BETTER<br>
+    STANDARD METHOD: THE LATEST RISK, CARRIED FORWARD · DECISION SET FOR THE TEST’S PUBLISHED MIX ·
+    VIGIL’S EDGE IS INSIDE OUR PRE-SET 97.5% MARGIN OF ERROR · <b>URIOT ET AL. 2022</b></div>
+</section>
+
+<!-- 8 · GLASS BOX ============================================================ -->
+<section class="slide" data-extended id="s7" aria-label="Glass box">
+  <svg class="glyph anim" style="--d:0.12s" width="76" height="46" viewBox="0 0 76 46" aria-hidden="true">
+    <line x1="38" y1="2" x2="38" y2="44" stroke="#1e2733"/>
+    <rect x="38" y="7" width="24" height="6" fill="#3987e5"/>
+    <rect x="21" y="20" width="17" height="6" fill="#46525f"/>
+    <rect x="38" y="33" width="12" height="6" fill="#3987e5"/>
+  </svg>
+  <p class="statement anim" style="--d:0.2s"><b>No black boxes.</b></p>
+  <div class="rows">
+    <div class="row" data-step="1">Every risk number <b>explains itself</b>:
+      per-feature attribution, on demand.</div>
+    <div class="row" data-step="2">Every prediction is <b>stamped</b> with the
+      model version that made it.</div>
+    <div class="row" data-step="3">A model that doesn’t clear the gate
+      <b>refuses to ship</b>.</div>
+  </div>
+</section>
+
+<!-- FALSE ALARMS · VIGIL's classifier as a filter (research build, ESA data, pooled
+     cross-validation: reports/paper/public.json P8; the latest-risk filter is post hoc,
+     reports/paper/ew_posthoc.json). This slide replaced the early-warning one after an
+     independent re-check found that VIGIL-E's early-warning gain does not beat the
+     latest risk itself (docs/v2/vigil-lab.md, "Round 4 correction 2"). ============== -->
+<section class="slide" id="s7b" aria-label="Fewer false alarms">
+  <p class="statement anim" style="--d:0.1s">Is this alarm <b>real?</b></p>
+  <p class="sub anim" style="--d:0.26s">Most high-risk alerts fade before closest approach. In research
+    tests, VIGIL learned to spot many of them, so a small team can focus on the real threats.</p>
+  <svg class="schem" viewBox="0 0 900 250" role="img"
+       aria-label="Schematic: four encounters are above the high-risk line at the decision point; today's rule raises four alarms; VIGIL flags the two that later fade below the line; the other two stay high-risk until closest approach.">
+    <line class="axis" x1="40" y1="206" x2="860" y2="206"/>
+    <line class="axis" x1="860" y1="200" x2="860" y2="212"/>
+    <text x="860" y="236" text-anchor="end">CLOSEST APPROACH</text>
+    <g data-step="1">
+      <line class="thresh" x1="40" y1="124" x2="860" y2="124"/>
+      <text x="40" y="146">HIGH-RISK LINE</text>
+      <path class="ew-curve" pathLength="1000" d="M40 52 C 150 50, 240 48, 300 48 C 430 48, 600 40, 860 36"/>
+      <path class="ew-curve" pathLength="1000" d="M40 74 C 150 72, 240 71, 300 70 C 420 70, 540 140, 860 170"/>
+      <path class="ew-curve" pathLength="1000" d="M40 96 C 150 94, 240 93, 300 92 C 430 92, 610 88, 860 84"/>
+      <path class="ew-curve" pathLength="1000" d="M40 114 C 150 113, 240 113, 300 112 C 430 112, 570 168, 860 192"/>
+    </g>
+    <g data-step="2">
+      <line class="flag-cf" x1="300" y1="30" x2="300" y2="206"/>
+      <circle cx="300" cy="48" r="4" fill="#5c6875"/>
+      <circle cx="300" cy="70" r="4" fill="#5c6875"/>
+      <circle cx="300" cy="92" r="4" fill="#5c6875"/>
+      <circle cx="300" cy="112" r="4" fill="#5c6875"/>
+      <text x="300" y="236" text-anchor="middle">TODAY’S RULE: 4 ALARMS</text>
+    </g>
+    <g data-step="3">
+      <circle cx="300" cy="70" r="8" fill="none" stroke="#3987e5" stroke-width="1.5"/>
+      <circle cx="300" cy="112" r="8" fill="none" stroke="#3987e5" stroke-width="1.5"/>
+      <text class="hot" x="300" y="18" text-anchor="middle">VIGIL: 2 LIKELY TO FADE</text>
+    </g>
+  </svg>
+  <div class="ew-result" data-step="4">
+    <span class="ew-x"><span data-count="28" data-dec="0" data-dur="1400">0</span>%</span>
+    <span class="ew-cap"><b>OF FALSE ALARMS FILTERED OUT</b><br>WHILE KEEPING 95%<br>OF THE REAL THREATS</span>
+  </div>
+  <div class="wfoot" data-step="4" style="margin-top: clamp(10px,2vh,20px)">VIGIL RESEARCH BUILD ·
+    <b>ESA DATA</b> WITH FULL TRACKING UNCERTAINTY · 486 HIGH-RISK ALERTS, CROSS-VALIDATED<br>
+    THE LATEST RISK ALONE FILTERS 9% · <b>NOT YET IN THE LIVE APP</b></div>
+</section>
+
+<!-- SPACE WEATHER · the Sun moves orbits (figures: NRLMSIS 2.1 via the app's
+     storm table at Kp 7; Kessler's storm-drift model for the ISS during the
+     G3 storm of 10 Oct 2026; Baruah et al., Space Weather 22, e2023SW003716) == -->
+<section class="slide sw" id="s7c" aria-label="Space weather: when the Sun storms, orbits move">
+  <canvas class="sw-cv" id="sw-cv" aria-hidden="true"></canvas>
+  <div class="sw-labels" aria-hidden="true">
+    <span class="sw-lab wind to-center" id="swl-wind">SOLAR WIND</span>
+    <span class="sw-lab shield to-left" id="swl-shield">EARTH’S MAGNETIC SHIELD</span>
+    <span class="sw-lab aurora" id="swl-aurora">AURORA</span>
+    <span class="sw-lab air" id="swl-air">STORM-HEATED AIR</span>
+  </div>
+  <div class="sw-head">
+    <p class="statement anim" style="--d:0.1s">When the Sun storms, <b>orbits move.</b></p>
+    <p class="sub anim" style="--d:0.26s">Kessler reads the Sun live from NOAA and flags every
+      close approach a storm puts in doubt.</p>
+  </div>
+  <div class="sw-foot">
+    <div class="sw-stats">
+      <div class="sw-stat hot" data-step="1"><div class="sw-v"><span class="x">×</span><span data-count="2" data-dur="1200">0</span></div>
+        <div class="sw-k">AIR DENSITY AT 550 KM<small>STRONG (G3) STORM VS A QUIET DAY</small></div></div>
+      <div class="sw-stat" data-step="2"><div class="sw-v"><span data-count="9" data-dur="1400">0</span><small>KM</small></div>
+        <div class="sw-k">ISS PREDICTION DRIFT<small>3 DAYS INTO THE 10 OCT 2026 G3 STORM</small></div></div>
+      <div class="sw-stat" data-step="3"><div class="sw-v"><span data-count="38" data-dur="1600">0</span><small>OF 49</small></div>
+        <div class="sw-k">NEW STARLINKS LOST<small>TO MODERATE STORMS · FEBRUARY 2022</small></div></div>
+    </div>
+    <div class="wfoot">NRLMSIS 2.1 · KESSLER’S STORM-DRIFT MODEL · <b>BARUAH ET AL., SPACE WEATHER, 2024</b><br>
+      <span id="sw-live">ILLUSTRATION · NOT TO SCALE</span></div>
+  </div>
+</section>
+
+<!-- WATCH OFFICER ============================================================ -->
+<section class="slide" data-extended id="s8" aria-label="AI watch officer">
+  <div class="orbit-glyph anim" style="--d:0.12s" aria-hidden="true">
+    <span class="og-ring"></span>
+    <span class="og-spin"><span class="og-dot"></span></span>
+  </div>
+  <p class="statement anim" style="--d:0.2s">Kessler AI doesn’t chat about the console.
+    <b>It drives it.</b></p>
+  <div class="rows">
+    <div class="row" data-step="1">27 tools: it filters the table, flies the
+      globe, opens the simulator, plans the burn.</div>
+    <div class="row" data-step="2">Actions land <b>mid-sentence</b>, while the
+      answer is still streaming.</div>
+    <div class="row" data-step="3">And every hour it stands a watch: shift
+      entries, spoken briefs, no prompt.</div>
+  </div>
+</section>
+
+<!-- 10 · SIMULATOR =========================================================== -->
+<section class="slide" data-extended id="s9" aria-label="Encounter simulator">
+  <svg class="glyph anim" style="--d:0.12s" width="92" height="42" viewBox="0 0 92 42" aria-hidden="true">
+    <line x1="2" y1="32" x2="90" y2="9" stroke="#728394" opacity="0.7"/>
+    <line x1="2" y1="8" x2="90" y2="36" stroke="#46525f"/>
+    <circle cx="46" cy="21.5" r="3.2" fill="#dbe2ea"/>
+    <circle cx="63" cy="27" r="3.2" fill="#3987e5"/>
+  </svg>
+  <p class="statement anim" style="--d:0.2s">Every close approach, <b>flyable</b>.</p>
+  <p class="sub anim" style="--d:0.36s">Encounter plane. Space camera. AI narration
+    with a voice. And a what-if maneuver panel:</p>
+  <div data-step="1">
+    <div class="pcline" style="margin-top: clamp(26px,4.5vh,44px)">
+      BURN <b>+1.0 M/S</b> · THREE HOURS BEFORE CLOSEST APPROACH</div>
+    <div class="morph">
+      <span class="m-from">45 m</span>
+      <span class="m-arrow">→</span>
+      <span class="m-to"><span data-count="18.63" data-dec="2" data-dur="1600">0</span> <small>km</small></span>
+    </div>
+    <div class="pcline" data-step="2">COLLISION PROBABILITY · <b>&lt; 1e-10</b></div>
+  </div>
+</section>
+
+<!-- ACT · one-click avoidance ================================================ -->
+<section class="slide" data-extended id="s9b" aria-label="One-click avoidance">
+  <p class="statement anim" style="--d:0.2s">One click from worry <b>to a plan.</b></p>
+  <p class="sub anim" style="--d:0.36s">The smallest along-track burn that clears the
+    alert line, searched at several lead times, then replayed before and after in
+    the simulator.</p>
+  <svg class="schem act" viewBox="0 50 900 205" role="img"
+       aria-label="Schematic: two tracks cross inside the alert line; after a small along-track burn the same orbit arrives at a different time and passes clear.">
+    <line class="track" x1="100" y1="210" x2="800" y2="70"/>
+    <line class="track" x1="100" y1="70" x2="800" y2="210"/>
+    <circle class="ring" cx="450" cy="140" r="44"/>
+    <text x="450" y="84" text-anchor="middle">ALERT LINE</text>
+    <line class="trail" x1="450" y1="140" x2="597" y2="110.6"/>
+    <circle class="s" cx="456" cy="141.2" r="6"/>
+    <circle class="p" cx="444" cy="142.4" r="6"/>
+    <g data-step="1">
+      <text class="crit" x="250" y="246" text-anchor="middle">BEFORE · INSIDE THE LINE</text>
+    </g>
+    <g class="act-after" data-step="2">
+      <circle class="burn" cx="190" cy="192" r="4"/>
+      <text class="hot" x="190" y="178" text-anchor="middle">BURN</text>
+      <text class="hot" x="650" y="246" text-anchor="middle">AFTER · SAME ORBIT, NEW TIMING, CLEAR</text>
+    </g>
+  </svg>
+  <div class="wfoot" data-step="3">SCHEMATIC · TWO-BODY DIFFERENTIAL · <b>SCREENING-GRADE,
+    LABELED SO</b> · NOT AN OPERATIONAL MANEUVER PLAN</div>
+</section>
+
+<!-- PROTECT A SATELLITE ====================================================== -->
+<section class="slide" data-extended id="s9c" aria-label="Protect a satellite">
+  <div class="watch anim" style="--d:0.15s">
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      <circle class="w-track" cx="50" cy="50" r="49"/>
+      <circle class="w-arc" cx="50" cy="50" r="49" pathLength="1000"/>
+    </svg>
+    <div class="w-in"><div class="w-num">60</div><div class="w-unit">SECONDS</div></div>
+  </div>
+  <p class="statement anim" style="--d:0.3s; margin-top: clamp(20px,3.4vh,36px)">From a NORAD id
+    to a <b>plain-language verdict.</b></p>
+  <div class="rows">
+    <div class="row" data-step="1" style="max-width:44ch">Built for <b>student CubeSat teams</b>:
+      a catalog number, a pasted TLE, or a planned orbit.</div>
+    <div class="row dim" data-step="2" style="max-width:44ch">And it never says “all clear” without fresh data.</div>
+  </div>
+</section>
+
+<!-- HONESTY ================================================================== -->
+<section class="slide" data-extended id="s10" aria-label="Honest by design">
+  <svg class="glyph anim" style="--d:0.12s" width="150" height="46" viewBox="0 0 150 46" aria-hidden="true">
+    <line x1="0" y1="16" x2="150" y2="16" stroke="#46525f"/>
+    <path d="M0 40 C 42 40, 62 17.5, 88 16.2 L150 16" fill="none" stroke="#3987e5" stroke-width="1.2"/>
+    <line x1="88" y1="10" x2="88" y2="22" stroke="#728394"/>
+  </svg>
+  <p class="statement anim" style="--d:0.2s"><b>Honest by design.</b></p>
+  <div class="rows">
+    <div class="row" data-step="1">Assumed-uncertainty probabilities
+      <b>say so on screen</b>.</div>
+    <div class="row" data-step="2">Two-body what-ifs carry their caveat,
+      right under the result.</div>
+    <div class="row" data-step="3">When the observed risk should win, the model
+      <b>defers, and admits it</b>.</div>
+    <div class="row" data-step="4">Every benchmark rule was <b>locked before the test</b>,
+      and every result is published.</div>
+  </div>
+</section>
+
+<!-- 12 · THE NUMBERS ========================================================= -->
+<section class="slide" data-extended id="s11" aria-label="Kessler today">
+  <p class="statement anim" style="--d:0.18s">Built end to end.
+    <b>Running right now.</b></p>
+  <div class="stats">
+    <div class="stat hot anim" style="--d:0.30s"><div class="s-v" data-count="33166" data-live="catalog" data-dur="1600">0</div><div class="s-k">OBJECTS TRACKED</div></div>
+    <div class="stat anim" style="--d:0.38s"><div class="s-v" data-count="15271" data-live="conjunctions" data-dur="1600">0</div><div class="s-k">CONJUNCTIONS · 72 H</div></div>
+    <div class="stat anim" style="--d:0.46s"><div class="s-v">60<span style="font-size:0.5em">&nbsp;MIN</span></div><div class="s-k">REFRESH CADENCE</div></div>
+    <div class="stat anim" style="--d:0.54s"><div class="s-v" data-count="15321" data-dur="1600">0</div><div class="s-k">ESA CONJUNCTION EVENTS</div></div>
+    <div class="stat anim" style="--d:0.62s"><div class="s-v" data-count="562" data-dur="1600">0</div><div class="s-k">TESTS · ALL GREEN</div></div>
+    <div class="stat anim" style="--d:0.70s"><div class="s-v" data-count="41" data-dur="1600">0</div><div class="s-k">API ROUTES · 9 PAGES</div></div>
+  </div>
+</section>
+
+<!-- 13 · FINALE ============================================================== -->
+<section class="slide finale" id="s12" aria-label="Kessler">
+  <svg class="finale-mark" viewBox="0 0 24 24" aria-hidden="true">
+    <g id="f-ring1-g" opacity="0"><ellipse id="f-ring1" cx="12" cy="12" rx="9" ry="3.4"
+      stroke="#9aa8b8" stroke-width="0.7" fill="none"/></g>
+    <g id="f-ring2-g" opacity="0"><ellipse id="f-ring2" cx="12" cy="12" rx="9" ry="3.4"
+      stroke="#5c6875" stroke-width="0.7" fill="none"/></g>
+    <circle id="f-core" cx="12" cy="12" r="0" fill="#9aa8b8"/>
+    <circle id="f-sat1" r="1.1" fill="#dbe2ea" opacity="0"/>
+  </svg>
+  <div class="finale-word">KESSLER</div>
+  <div class="finale-tag">AI ORBITAL RISK</div>
+  <div class="finale-tools">BUILT WITH <b>PYTHON</b> · <b>JAVASCRIPT</b> · <b>HTML</b> · <b>CSS</b> · FASTAPI · SGP4 · XGBOOST · NRLMSIS ·
+    SQLITE · DOCKER · CLAUDE API · ELEVENLABS<br>DATA FROM SPACE-TRACK · CELESTRAK · NOAA SWPC · ESA KELVINS · NASA</div>
+</section>
+
+<div class="hud" aria-hidden="true">
+  <div class="dots" id="hud-dots"></div>
+  <div class="count" id="hud-count"></div>
+</div>
+<div class="hint" id="hint">→ NEXT · ← BACK · F FULLSCREEN</div>
+
+<script src="js/deck-earth.js"></script>
+<script src="js/deckglobe.js"></script>
+<script src="js/decksun.js"></script>
+<script src="js/deckscenes.js"></script>
+<script>
+(() => {
+  'use strict';
+  /* The competition cut (a 3-minute video: this deck, then the live demo).
+     Slides marked data-extended - the console, pipeline, AI, simulator,
+     stats - are what the demo shows, so they are dropped unless the deck is
+     opened with ?full. */
+  if (!new URLSearchParams(location.search).has('full')) {
+    document.querySelectorAll('.slide[data-extended]').forEach((el) => el.remove());
+  }
+  const slides = [...document.querySelectorAll('.slide')];
+  const N = slides.length;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DPR = Math.min(devicePixelRatio || 1, 2);
+  let cur = -1;
+
+  /* --- odometer counters: digits roll like a meter ----------------------------- */
+  function runCount(el) {
+    const target = parseFloat(el.dataset.count);
+    const dec = parseInt(el.dataset.dec || '0', 10);
+    const dur = reduced ? 10 : parseInt(el.dataset.dur || '1800', 10);
+    const fmt = target.toLocaleString('en-US',
+      { minimumFractionDigits: dec, maximumFractionDigits: dec });
+    if (!el.dataset.od) {
+      el.dataset.od = '1';
+      el.textContent = '';
+      /* the reels are decoration: assistive tech reads the number itself */
+      const sr = document.createElement('span');
+      sr.className = 'sr';
+      sr.textContent = fmt;
+      el.appendChild(sr);
+      for (const ch of fmt) {
+        if (/\d/.test(ch)) {
+          const slot = document.createElement('span');
+          slot.className = 'od';
+          const col = document.createElement('span');
+          col.className = 'od-col';
+          /* two full revolutions, then stop on the digit */
+          let html = '';
+          for (let c = 0; c < 2; c++) for (let d = 0; d <= 9; d++) html += `<i>${d}</i>`;
+          for (let d = 0; d <= +ch; d++) html += `<i>${d}</i>`;
+          col.innerHTML = html;
+          slot.appendChild(col);
+          slot.dataset.final = String(20 + +ch);
+          slot.setAttribute('aria-hidden', 'true');
+          el.appendChild(slot);
+        } else {
+          const sep = document.createElement('span');
+          sep.className = 'od-sep';
+          sep.setAttribute('aria-hidden', 'true');
+          sep.textContent = ch;
+          el.appendChild(sep);
+        }
+      }
+    }
+    const slots = el.querySelectorAll('.od');
+    slots.forEach((slot) => {
+      const col = slot.firstChild;
+      col.style.transition = 'none';
+      col.style.transform = 'translateY(0)';
+    });
+    /* timeout, not rAF: the roll must fire even in occluded windows */
+    setTimeout(() => {
+      slots.forEach((slot, i) => {
+        const col = slot.firstChild;
+        col.style.transition =
+          `transform ${dur}ms cubic-bezier(0.16, 1, 0.3, 1) ${i * 45}ms`;
+        col.style.transform = `translateY(calc(${slot.dataset.final} * -1em))`;
+      });
+    }, 30);
+  }
+  const countsIn = (root) =>
+    root.querySelectorAll('[data-count]').forEach((el) => {
+      if (el.closest('[data-step]') && !el.closest('[data-step]').classList.contains('is-on')) return;
+      runCount(el);
+    });
+
+  /* --- builds: every step plays on its own as the slide arrives, in step order,
+         a beat apart (several elements may share one step number) ------------ */
+  const BUILD_T0 = 380, BUILD_GAP = 200;     /* ms after the slide arrives */
+  const stepsOf = (s) => [...s.querySelectorAll('[data-step]')]
+    .sort((a, b) => Number(a.dataset.step) - Number(b.dataset.step));
+  function showStep(el) {
+    el.classList.add('is-on');
+    el.querySelectorAll('[data-count]').forEach(runCount);
+    if (el.matches('[data-count]')) runCount(el);
+  }
+  let buildTimers = [];
+  function playBuilds(s) {
+    buildTimers.forEach(clearTimeout);
+    buildTimers = [];
+    const groups = [];
+    for (const el of stepsOf(s)) {
+      const g = groups[groups.length - 1];
+      if (g && g.v === el.dataset.step) g.els.push(el);
+      else groups.push({ v: el.dataset.step, els: [el] });
+    }
+    /* timeouts, not rAF: builds must land even in occluded windows */
+    groups.forEach((g, k) => buildTimers.push(setTimeout(() => g.els.forEach(showStep),
+      reduced ? 0 : BUILD_T0 + k * BUILD_GAP)));
+  }
+
+  /* --- navigation ----------------------------------------------------------------- */
+  const dotsEl = document.getElementById('hud-dots');
+  for (let i = 0; i < N; i++) dotsEl.appendChild(document.createElement('i'));
+  const hudDots = [...dotsEl.children];
+  const count = document.getElementById('hud-count');
+  function goTo(i) {
+    i = Math.max(0, Math.min(N - 1, i));
+    if (i === cur) return;
+    if (cur >= 0) {
+      const old = slides[cur];
+      old.classList.remove('is-active', 'is-in');
+      stepsOf(old).forEach((el) => el.classList.remove('is-on'));
+    }
+    cur = i;
+    const s = slides[cur];
+    s.classList.add('is-active');
+    /* timeout, not rAF: arming must survive occluded/backgrounded windows */
+    setTimeout(() => {
+      s.classList.add('is-in');
+      countsIn(s);
+    }, 30);
+    playBuilds(s);
+    if (s.id === 's12') finale.start(); else finale.stop();
+    if (s.id === 's4b') live.enter(); else live.leave();
+    if (s.id === 's2b') tm.load();
+    if (s.id === 's1b') infra.enter(); else infra.leave();
+    if (s.id === 's2') swarm.enter(); else swarm.leave();
+    if (s.id === 's2a') station.enter(); else station.leave();
+    if (s.id === 's2b') crossing.enter(); else crossing.leave();
+    if (s.id === 's7c') sun.enter(); else sun.leave();
+    /* the Sun's surface and the big Earths take a moment: start them a slide early */
+    const next = slides[cur + 1] && slides[cur + 1].id;
+    if (next === 's7c') sun.prepare();
+    if (next === 's2a') station.prepare();
+    if (next === 's2b') crossing.prepare();
+    hudDots.forEach((d, k) => {
+      d.className = k < cur ? 'past' : (k === cur ? 'on' : '');
+    });
+    count.textContent = `${String(cur + 1).padStart(2, '0')} / ${String(N).padStart(2, '0')}`;
+    history.replaceState(null, '', `#${cur + 1}`);
+    starsTo(cur);
+  }
+  /* a keypress moves whole slides: the builds play by themselves */
+  const advance = () => goTo(cur + 1);
+  const back = () => goTo(cur - 1);
+
+  /* --- input ------------------------------------------------------------------------ */
+  addEventListener('keydown', (ev) => {
+    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    /* a focused button (Interact / Done) keeps Enter and Space for itself */
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.closest && ev.target.closest('button')) return;
+    switch (ev.key) {
+      case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown': case 'Enter':
+        ev.preventDefault(); advance(); break;
+      case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+        ev.preventDefault(); back(); break;
+      case 'Home': ev.preventDefault(); goTo(0); break;
+      case 'End': ev.preventDefault(); goTo(N - 1); break;
+      case 'f': case 'F':
+        document.fullscreenElement ? document.exitFullscreen()
+          : document.documentElement.requestFullscreen(); break;
+      default: return;
+    }
+    moved();
+  });
+  addEventListener('click', (ev) => {
+    if (ev.target.closest('.hud, .interact')) return;
+    /* while the live console has the pointer, a click on the stage hands
+       control back to the deck instead of advancing */
+    if (live.interacting()) { live.stop(); moved(); return; }
+    ev.shiftKey ? back() : advance();
+    moved();
+  });
+  let tx0 = null;
+  addEventListener('touchstart', (ev) => { tx0 = ev.touches[0].clientX; }, { passive: true });
+  addEventListener('touchend', (ev) => {
+    if (tx0 === null) return;
+    const dx = ev.changedTouches[0].clientX - tx0;
+    if (Math.abs(dx) > 40) (dx < 0 ? advance() : back());
+    tx0 = null; moved();
+  }, { passive: true });
+
+  let idleT = null;
+  function moved() {
+    document.body.classList.remove('idle');
+    document.body.classList.add('moved');
+    clearTimeout(idleT);
+    idleT = setTimeout(() => document.body.classList.add('idle'), 3200);
+  }
+  addEventListener('mousemove', moved, { passive: true });
+  moved();
+
+  /* --- starfield: the deep field the whole deck lives in; navigation pans it ---- */
+  const cv = document.getElementById('space');
+  const cx = cv.getContext('2d');
+  let W = 0, H = 0, stars = [];
+  function sizeSpace() {
+    W = innerWidth; H = innerHeight;
+    cv.width = W * DPR; cv.height = H * DPR;
+    cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (!stars.length) {
+      for (let i = 0; i < 240; i++) stars.push({
+        x: Math.random(), y: Math.random(),
+        r: 0.4 + Math.random() * 1.1,
+        a: 0.12 + Math.random() * 0.5,
+        tw: 0.4 + Math.random() * 1.6,
+        ph: Math.random() * Math.PI * 2,
+        depth: 0.35 + Math.random() * 0.65,
+      });
+    }
+  }
+  addEventListener('resize', sizeSpace);
+  sizeSpace();
+  const walkers = [...document.querySelectorAll('.mk-walk')];
+  let off = 0, offTarget = 0;
+  const starsTo = (i) => { offTarget = i * 90; };
+  function loop(t) {
+    off += (offTarget - off) * 0.03;
+    cx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      const x = ((s.x * W - off * s.depth) % (W + 40) + W + 40) % (W + 40) - 20;
+      const tw = reduced ? 1 : 0.75 + 0.25 * Math.sin(t / 1000 * s.tw + s.ph);
+      cx.globalAlpha = s.a * tw;
+      cx.fillStyle = '#dbe2ea';
+      cx.beginPath(); cx.arc(x, s.y * H, s.r, 0, 6.2832); cx.fill();
+    }
+    cx.globalAlpha = 1;
+    if (slides[cur] && slides[cur].id === 's12') finale.draw(t);
+    infra.draw(t);
+    swarm.draw(t);
+    station.draw(t);
+    crossing.draw(t);
+    sun.draw(t);
+    /* living marks: each satellite walks its 30-degree ring, passing
+       through the exact static pose every lap */
+    if (!reduced) {
+      const c = Math.cos(Math.PI / 6), sn = Math.sin(Math.PI / 6);
+      for (const w of walkers) {
+        const phi = -0.6455 - (t / 9000) * Math.PI * 2 + Number(w.dataset.ph || 0);
+        const ex = 9 * Math.cos(phi), ey = 3.4 * Math.sin(phi);
+        w.setAttribute('cx', (12 + ex * c - ey * sn).toFixed(3));
+        w.setAttribute('cy', (12 + ex * sn + ey * c).toFixed(3));
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  /* --- s12: the mark arrives, and the satellite never stops --------------------- */
+  const finale = (() => {
+    const ring1 = document.getElementById('f-ring1-g');
+    const ring2 = document.getElementById('f-ring2-g');
+    const ring1e = document.getElementById('f-ring1');
+    const ring2e = document.getElementById('f-ring2');
+    const core = document.getElementById('f-core');
+    const sat1 = document.getElementById('f-sat1');
+    const slideEl = document.getElementById('s12');
+    const PHI_END = -0.6455;   /* lands the satellite at the mark's (19.2, 13.8) */
+    const SPIN = reduced ? 10 : 2600;
+    let t0 = 0, running = false;
+    const satPos = (phi) => {
+      const c = Math.cos(Math.PI / 6), s = Math.sin(Math.PI / 6);
+      const ex = 9 * Math.cos(phi), ey = 3.4 * Math.sin(phi);
+      return [12 + ex * c - ey * s, 12 + ex * s + ey * c];
+    };
+    const ease = (p) => 1 - Math.pow(1 - p, 3);
+    function draw(t) {
+      if (!running) return;
+      const el = t - t0;
+      const p = Math.max(0, Math.min(el / SPIN, 1));   /* rAF time can trail t0 */
+      const e = ease(p);
+      /* the rings scale gently into place - present, not busy */
+      const k = (0.88 + 0.12 * e).toFixed(4);
+      const grow = `translate(12 12) scale(${k}) translate(-12 -12)`;
+      ring1.setAttribute('transform', `rotate(30 12 12) ${grow}`);
+      ring2.setAttribute('transform', `rotate(-30 12 12) ${grow}`);
+      ring1.setAttribute('opacity', e.toFixed(3));
+      ring2.setAttribute('opacity', e.toFixed(3));
+      const sw = (0.7 + 0.5 * e).toFixed(3);
+      ring1e.setAttribute('stroke-width', sw);
+      ring2e.setAttribute('stroke-width', sw);
+      /* one half-orbit glide into place, then a steady walk, forever */
+      let phi = p < 1 ? PHI_END + (1 - e) * Math.PI
+                      : PHI_END - ((el - SPIN) / 7500) * Math.PI * 2;
+      const [x1, y1] = satPos(phi);
+      sat1.setAttribute('cx', x1); sat1.setAttribute('cy', y1);
+      sat1.setAttribute('opacity', Math.min(1, e * 1.6).toFixed(3));
+      core.setAttribute('r', (1.3 * Math.min(1, e * 1.8)).toFixed(3));
+      if (p >= 0.5) slideEl.classList.add('lit');
+    }
+    return {
+      /* the opening pose is set the moment the slide is entered, with the
+         type's transitions held off: otherwise the mark showed at rest while
+         the slide faded in, vanished on the first frame, then animated back */
+      start() {
+        slideEl.classList.add('reset');
+        slideEl.classList.remove('lit');
+        t0 = performance.now(); running = true;
+        draw(t0);
+        void slideEl.offsetWidth;
+        slideEl.classList.remove('reset');
+      },
+      stop() { running = false; },
+      draw,
+    };
+  })();
+
+  /* s3: kinetic focus - split the line into letters; 'blind.' gets the fate */
+  const blind = document.querySelector('#blind-line b');
+  if (blind) {
+    const text = blind.textContent;
+    const cutAt = text.lastIndexOf(' ') + 1;   /* 'blind.' starts here */
+    blind.textContent = '';
+    const word = document.createElement('span');
+    word.className = 'blindw';
+    /* Letters sit inside per-word nowrap boxes joined by ordinary spaces, so
+       the line can only break BETWEEN words. (Non-breaking spaces between
+       inline-block letters forced a mid-word break: 'Everyone els / e'.) */
+    let box = null;
+    [...text].forEach((ch, i) => {
+      if (ch === ' ') {
+        blind.appendChild(document.createTextNode(' '));
+        box = null;
+        return;
+      }
+      if (!box) {
+        box = i >= cutAt ? word : document.createElement('span');
+        if (box !== word) { box.className = 'kw'; blind.appendChild(box); }
+      }
+      const sp = document.createElement('span');
+      sp.className = 'k';
+      sp.style.setProperty('--d', `${i * 0.028}s`);
+      sp.textContent = ch;
+      box.appendChild(sp);
+    });
+    blind.appendChild(word);
+  }
+
+  /* s4b: the product still - graceful until the screenshot lands */
+  const shotImg = document.getElementById('shot-img');
+  const shotMissing = document.getElementById('shot-missing');
+  if (shotImg) shotImg.addEventListener('error', () => {
+    shotImg.hidden = true;
+    if (!live.isLive()) shotMissing.hidden = false;
+  });
+
+  /* s4b, served by the app: the LIVE console replaces the still. Loaded only
+     when the slide first becomes active, only after /status answers (so a
+     plain static server or file:// keeps the still), scaled from a desktop
+     viewport into the window. Inert until the presenter asks to interact. */
+  const live = (() => {
+    const frame = document.getElementById('shot-frame');
+    const body = document.getElementById('shot-body');
+    const btn = document.getElementById('shot-interact');
+    const label = document.getElementById('shot-label');
+    if (!frame) {                     /* the console slide is not in this cut */
+      return { enter() {}, leave() {}, interacting: () => false, stop() {}, isLive: () => false };
+    }
+    const VW = 1440, VH = 810;
+    const served = location.protocol === 'http:' || location.protocol === 'https:';
+    let state = 'idle';            /* idle | loading | live | failed */
+    let ifr = null;
+    function fit() {
+      if (ifr) ifr.style.transform = `scale(${body.clientWidth / VW})`;
+    }
+    function fail() {
+      state = 'failed';
+      if (ifr) ifr.remove();
+      ifr = null;
+      body.classList.remove('is-live', 'interactive');
+      frame.classList.remove('is-live');
+    }
+    async function load() {
+      if (!served || state !== 'idle') return;
+      state = 'loading';
+      try {
+        const ctl = new AbortController();
+        const t = setTimeout(() => ctl.abort(), 5000);
+        const res = await fetch('/status', { signal: ctl.signal,
+                                             headers: { Accept: 'application/json' } });
+        clearTimeout(t);
+        if (!res.ok) throw new Error('status ' + res.status);
+        await res.json();
+      } catch (_) { state = 'failed'; return; }
+      ifr = document.createElement('iframe');
+      ifr.className = 'live-frame';
+      ifr.title = 'The Kessler console, live';
+      ifr.tabIndex = -1;
+      ifr.width = VW; ifr.height = VH;
+      const guard = setTimeout(fail, 15000);
+      ifr.addEventListener('load', () => {
+        clearTimeout(guard);
+        try {
+          const doc = ifr.contentDocument;
+          if (!doc || !doc.body || !doc.body.childElementCount) throw new Error('empty');
+        } catch (_) { fail(); return; }
+        state = 'live';
+        body.classList.add('is-live');
+        frame.classList.add('is-live');
+        label.textContent = location.host;  /* the real address, like a browser bar */
+        label.style.letterSpacing = '0.08em';
+        shotMissing.hidden = true;
+      });
+      ifr.src = '/';
+      body.insertBefore(ifr, shotImg.nextSibling);
+      fit();
+    }
+    function interact(on) {
+      if (state !== 'live') on = false;
+      body.classList.toggle('interactive', on);
+      btn.setAttribute('aria-pressed', String(on));
+      btn.textContent = on ? 'Done' : 'Interact';
+      if (on) { ifr.tabIndex = 0; ifr.focus(); }
+      else if (ifr) { ifr.tabIndex = -1; if (document.activeElement === ifr) ifr.blur(); }
+    }
+    btn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      interact(!body.classList.contains('interactive'));
+      if (!body.classList.contains('interactive')) btn.blur();
+    });
+    addEventListener('resize', fit);
+    return {
+      enter: load,
+      leave: () => interact(false),
+      interacting: () => body.classList.contains('interactive'),
+      stop: () => interact(false),
+      isLive: () => state === 'live',
+    };
+  })();
+
+  /* Time Machine: when served, take the lead time and provenance from the
+     replay itself (the copy above is the reconstruction's result) */
+  const tm = (() => {
+    let asked = false;
+    return {
+      load() {
+        if (asked || !/^https?:$/.test(location.protocol)) return;
+        asked = true;
+        fetch('/scenarios/iridium-cosmos-2009', { headers: { Accept: 'application/json' } })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((sc) => {
+            const fd = sc && sc.screening && sc.screening.first_detection;
+            if (sc && sc.screening && sc.screening.detected === false) {
+              document.getElementById('tm-lead').closest('.row').textContent =
+                'Kessler replays the day through its own screening pipeline.';
+              return;
+            }
+            if (!fd || !Number.isFinite(fd.hours_before_tca)) return;
+            document.getElementById('tm-lead').textContent = String(Math.round(fd.hours_before_tca));
+            if (sc.provenance === 'archived') {
+              document.getElementById('tm-prov').innerHTML =
+                'ORBITS FROM <b>ARCHIVED SPACE-TRACK ELEMENT SETS</b>';
+            }
+          })
+          .catch(() => { /* offline: the reconstruction's copy stands */ });
+      },
+    };
+  })();
+
+  /* --- s1b: a constellation passes overhead. Each service is served by the
+         satellites nearest it, and hands off from one to the next as they
+         move, the way GPS and Starlink do. ---------------------------------- */
+  const infra = (() => {
+    const svg = document.getElementById('infra');
+    const tpl = document.getElementById('ksat');
+    const none = { enter() {}, leave() {}, draw() {}, still() {} };
+    if (!svg || !tpl) return none;
+    const NS = 'http://www.w3.org/2000/svg';
+    const satG = document.getElementById('infra-sats');
+    const beamG = document.getElementById('infra-beams');
+    /* icon centres; beams land just above each icon */
+    const ICONS = [[150, 324], [330, 302], [500, 295], [670, 302], [850, 324]];
+    const NSAT = 6, T_IN = -0.1, T_OUT = 1.1, SPAN = T_OUT - T_IN;
+    const LAP = 34;                                  /* seconds for one pass, edge to edge */
+    const REACH = 155, FULL = 38;                    /* beam fades in from REACH to FULL units */
+    const sats = [];
+    for (let k = 0; k < NSAT; k++) {
+      const g = tpl.cloneNode(true);
+      g.removeAttribute('id');
+      satG.appendChild(g);
+      sats.push(g);
+    }
+    const beams = [];
+    for (let i = 0; i < ICONS.length; i++) {
+      for (let j = 0; j < 2; j++) {
+        const l = document.createElementNS(NS, 'line');
+        l.setAttribute('class', 'beam');
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('class', 'pulse');
+        c.setAttribute('r', '1.9');
+        beamG.appendChild(l); beamG.appendChild(c);
+        beams.push({ l, c });
+      }
+    }
+    /* the orbit drawn on the slide: M0 200 Q500 60 1000 200, so x = 1000 t */
+    const arcY = (t) => 200 - 280 * t + 280 * t * t;
+    const sm = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+    /* still poses (reduced motion): one satellite over each service */
+    const STILL = [0.15, 0.33, 0.5, 0.67, 0.85];
+    let on = false, until = 0, tIn = 0;
+    function render(sec) {
+      const arrive = reduced ? 1 : sm(0.35, 1.25, sec - tIn);
+      const P = [];
+      for (let k = 0; k < NSAT; k++) {
+        let t, a;
+        if (reduced) { t = STILL[k]; a = t === undefined ? 0 : 1; t = t === undefined ? 2 : t; }
+        else {
+          t = T_IN + (((k / NSAT) + sec / LAP) % 1) * SPAN;
+          a = sm(T_IN, T_IN + 0.08, t) * (1 - sm(T_OUT - 0.08, T_OUT, t));
+        }
+        const x = 1000 * t, y = arcY(t);
+        const ang = Math.atan2(560 * t - 280, 1000);   /* along the orbit, dish to Earth */
+        sats[k].setAttribute('transform',
+          `translate(${x.toFixed(2)} ${y.toFixed(2)}) rotate(${(ang * 180 / Math.PI).toFixed(2)}) scale(0.92)`);
+        sats[k].setAttribute('opacity', a.toFixed(3));
+        /* the dish, 15.2 units below the bus centre, in the satellite's frame */
+        P.push({ x: x - 15.2 * 0.92 * Math.sin(ang), y: y + 15.2 * 0.92 * Math.cos(ang), a });
+      }
+      ICONS.forEach(([ix, iy], i) => {
+        const w = P.map((p, k) => ({ k, w: p.a * sm(REACH, FULL, Math.abs(p.x - ix)) }))
+          .sort((p, q) => q.w - p.w);
+        for (let j = 0; j < 2; j++) {
+          const { l, c } = beams[i * 2 + j];
+          const pick = w[j], p = P[pick.k];
+          const op = arrive * pick.w;
+          if (op < 0.01) { l.setAttribute('opacity', '0'); c.setAttribute('opacity', '0'); continue; }
+          const bx = ix, by = iy - 19;
+          l.setAttribute('x1', p.x.toFixed(2)); l.setAttribute('y1', p.y.toFixed(2));
+          l.setAttribute('x2', bx); l.setAttribute('y2', by);
+          l.setAttribute('opacity', (0.9 * op).toFixed(3));
+          /* a signal pulse riding the beam down */
+          const ph = reduced ? 0.5 : (sec * 0.62 + i * 0.29 + j * 0.5) % 1;
+          c.setAttribute('cx', (p.x + (bx - p.x) * ph).toFixed(2));
+          c.setAttribute('cy', (p.y + (by - p.y) * ph).toFixed(2));
+          c.setAttribute('opacity', reduced ? '0' : (op * Math.sin(Math.PI * ph) * 0.95).toFixed(3));
+        }
+      });
+    }
+    return {
+      enter() { on = true; tIn = performance.now() / 1000; render(tIn); },
+      leave() { if (on) { on = false; until = performance.now() + 900; } },
+      draw(t) { if (on || t < until) render(t / 1000); },
+      still(sec) { render(tIn + sec); },
+    };
+  })();
+
+  /* --- s2: every tracked object around Earth -------------------------------------- */
+  const swarm = (() => {
+    const cv = document.getElementById('swarm-cv');
+    const none = { enter() {}, leave() {}, draw() {}, resize() {}, still() {}, catalog() {} };
+    if (!cv || typeof KDeckSwarm === 'undefined' || typeof KDeckGlobe === 'undefined') return none;
+    const scene = KDeckSwarm.mount(cv, { reduced });
+    const src = document.getElementById('swarm-src');
+    let on = false, until = 0, last = 0;
+    scene.load().then(() => { if (on) scene.render(); });
+    return {
+      enter() { on = true; last = 0; scene.layout(); scene.render(); },
+      leave() { if (on) { on = false; until = performance.now() + 900; } },
+      draw(t) {
+        if (reduced || (!on && t > until)) { last = 0; return; }
+        const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+        last = t;
+        scene.step(dt);
+        scene.render();
+      },
+      resize() { if (scene.layout()) scene.render(); },
+      catalog(rows) {
+        if (!scene.setCatalog(rows)) return;
+        if (src) src.textContent = 'EVERY DOT IS AN OBJECT IN KESSLER’S LIVE CATALOG · ALTITUDES COMPRESSED';
+        if (on) scene.render();
+      },
+      still(sec) { scene.layout(); scene.simulate(sec); },
+    };
+  })();
+
+  /* --- s2a: the station on 15 November 2021, the debris cloud sweeping past -------- */
+  const station = (() => {
+    const cv = document.getElementById('st-cv');
+    const none = { enter() {}, leave() {}, draw() {}, resize() {}, still() {}, prepare() {} };
+    if (!cv || typeof KDeckStation === 'undefined' || typeof KDeckGlobe === 'undefined') return none;
+    const scene = KDeckStation.mount(cv, { reduced });
+    let on = false, until = 0, last = 0, loading = null;
+    /* the full-resolution Earth decodes in the background, a slide early */
+    const prepare = () => { if (!loading) loading = scene.load().then(() => { if (on) scene.render(); }); return loading; };
+    return {
+      prepare,
+      /* every visit plays the same pass: the station coming round the Earth
+         into the cloud (with reduced motion, a still of the moment they meet) */
+      enter() { on = true; last = 0; scene.layout(); prepare(); scene.restart(); scene.simulate(reduced ? scene.meet : 0); },
+      leave() { if (on) { on = false; until = performance.now() + 900; } },
+      draw(t) {
+        if (reduced || (!on && t > until)) { last = 0; return; }
+        const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+        last = t;
+        scene.step(dt);
+        scene.render();
+      },
+      resize() { if (scene.layout()) scene.render(); },
+      still(sec) { scene.layout(); scene.restart(); scene.simulate(sec); },
+    };
+  })();
+  /* --- s2b: Iridium 33 and Cosmos 2251 on their real orbits ------------------------- */
+  const crossing = (() => {
+    const cv = document.getElementById('xing-cv');
+    const none = { enter() {}, leave() {}, draw() {}, resize() {}, still() {}, prepare() {} };
+    if (!cv || typeof KDeckCrossing === 'undefined' || typeof KDeckGlobe === 'undefined') return none;
+    const scene = KDeckCrossing.mount(cv, { reduced });
+    let on = false, until = 0, last = 0, loading = null;
+    const prepare = () => { if (!loading) loading = scene.load().then(() => { if (on) scene.render(); }); return loading; };
+    return {
+      prepare,
+      enter() { on = true; last = 0; scene.layout(); prepare(); scene.restart(); scene.render(); },
+      leave() { if (on) { on = false; until = performance.now() + 900; } },
+      draw(t) {
+        if (reduced || (!on && t > until)) { last = 0; return; }
+        const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+        last = t;
+        scene.step(dt);
+        scene.render();
+      },
+      resize() { if (scene.layout()) scene.render(); },
+      still(sec) { scene.layout(); scene.restart(); scene.simulate(sec); },
+    };
+  })();
+  addEventListener('resize', () => { swarm.resize(); station.resize(); crossing.resize(); });
+
+  /* --- s7c: the Sun's scene, drawn only while its slide is on stage ------------- */
+  const sun = (() => {
+    const cv = document.getElementById('sw-cv');
+    const none = { enter() {}, leave() {}, draw() {}, prepare() {}, resize() {}, still() {}, ready: () => false };
+    if (!cv || typeof KDeckSun === 'undefined') return none;
+    const scene = KDeckSun.mount(cv, { reduced });
+    const labs = {};
+    for (const k of ['wind', 'shield', 'aurora', 'air']) labs[k] = document.getElementById(`swl-${k}`);
+    const slideEl = document.getElementById('s7c');
+    function place() {
+      const a = scene.anchors();
+      slideEl.style.setProperty('--sw-left', `${Math.max(0, a.limbX).toFixed(1)}px`);
+      for (const k in labs) {
+        const el = labs[k], q = a[k];
+        if (!el || !q) continue;
+        el.style.left = `${q.x.toFixed(1)}px`;
+        el.style.top = `${q.y.toFixed(1)}px`;
+      }
+    }
+    let on = false, until = 0, last = 0;
+    /* the scene builds only what it still lacks, so this is cheap to repeat */
+    const prepare = () => scene.prepare().then(() => { if (reduced && on) scene.render(); });
+    return {
+      prepare,
+      enter() {
+        on = true; last = 0;
+        scene.layout(); place();
+        prepare();
+        scene.render();
+      },
+      leave() { if (on) { on = false; until = performance.now() + 900; } },
+      draw(t) {
+        if (reduced || (!on && t > until)) { last = 0; return; }
+        const dt = last ? Math.min(0.05, (t - last) / 1000) : 0;
+        last = t;
+        scene.step(dt);
+        scene.render();
+      },
+      resize() { if (scene.layout()) { place(); prepare(); scene.render(); } },
+      still(sec) { scene.layout(); place(); scene.simulate(sec); },
+      ready: () => scene.ready(),
+    };
+  })();
+  addEventListener('resize', () => sun.resize());
+
+  /* --- served by the app: live numbers replace the printed ones ------------------- */
+  const served = /^https?:$/.test(location.protocol);
+  function setLive(key, v) {
+    if (!Number.isFinite(v) || v <= 0) return;
+    document.querySelectorAll(`[data-live="${key}"]`).forEach((el) => {
+      if (Number(el.dataset.count) === v) return;
+      el.dataset.count = String(v);
+      delete el.dataset.od;                        /* rebuild the odometer's digits */
+      if (el.closest('.slide') === slides[cur]) runCount(el);
+    });
+  }
+  if (served) {
+    fetch('/status', { headers: { Accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((st) => {
+        if (!st) return;
+        setLive('catalog', st.catalog_size);
+        setLive('conjunctions', st.active_conjunctions);
+        const w = st.space_weather;
+        const el = document.getElementById('sw-live');
+        if (el && w && !w.stale && w.label && Number.isFinite(w.kp)) {
+          el.innerHTML = `LIVE FROM NOAA RIGHT NOW · <b>KP ${w.kp.toFixed(1)} · ${String(w.label).toUpperCase()}</b>`
+            + ' · ILLUSTRATION NOT TO SCALE';
+        }
+      })
+      .catch(() => { /* offline: the printed numbers stand */ });
+    setTimeout(() => {
+      fetch('/fleet/positions', { headers: { Accept: 'application/json' } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((fp) => { if (fp && Array.isArray(fp.objects)) swarm.catalog(fp.objects); })
+        .catch(() => { /* offline: the illustrative catalog stands */ });
+    }, 1200);
+  }
+
+  /* stills for checks and screenshots: a hidden tab gets no animation frames */
+  window.KDeck = {
+    go: (n) => goTo(n - 1),
+    still(sec) {                                   /* the scene on stage only */
+      const id = slides[cur] && slides[cur].id;
+      ({ s1b: infra, s2: swarm, s2a: station, s2b: crossing, s7c: sun })[id]?.still(sec);
+    },
+    sunReady: () => sun.ready(),
+  };
+
+  /* --- boot -------------------------------------------------------------------------- */
+  const hashSlide = () => {
+    const n = parseInt((location.hash || '').slice(1), 10);
+    return Number.isFinite(n) && n >= 1 ? n - 1 : 0;
+  };
+  goTo(hashSlide());
+  /* a typed or linked #N jumps there (goTo's own replaceState fires no event) */
+  addEventListener('hashchange', () => goTo(hashSlide()));
+})();
+</script>
+</body>
+</html>

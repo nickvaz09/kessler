@@ -1,0 +1,3 @@
+Earth imagery: NASA Visible Earth - Blue Marble (land_ocean_ice) and
+Black Marble 2012 (dnb_land_ocean_ice). NASA imagery is in the public domain.
+https://visibleearth.nasa.gov

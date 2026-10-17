@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('kessler.theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+  <meta name="theme-color" content="#000000">
+  <title>Kessler · Time Machine</title>
+  <meta name="description" content="Go back to 10 February 2009 and watch Kessler flag the Iridium 33 and Cosmos 2251 collision before it happened.">
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages/replay.css">
+</head>
+<body class="tm-page">
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Kessler home"><svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg><span class="brand__word">Kessler</span></a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="/">Overview</a>
+    <a href="/alerts.html">Alerts</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/replay.html" class="active" aria-current="page">Time Machine</a>
+    <a href="/model.html">Model</a>
+    <a href="/about.html">About</a>
+  </nav>
+  <div class="topbar__right">
+    <span id="hdr-status"></span>
+    <a class="wall-link" href="/wall.html">Ops wall</a>
+    <span class="live-pill" id="live-pill" role="status"><span class="live-pill__dot"></span><span class="live-pill__text">Connecting…</span></span>
+    <span id="utc-clock"></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle appearance"></button>
+    <a class="cta" href="/start.html"><span class="cta__long">Protect a satellite</span><span aria-hidden="true">＋</span></a>
+  </div>
+</header>
+
+<main class="tm" id="tm">
+  <section class="tm-stage" id="tm-stage" aria-label="Time Machine replay of the Iridium 33 and Cosmos 2251 collision">
+    <canvas class="tm-canvas" id="tm-canvas" aria-hidden="true"></canvas>
+    <div class="tm-vignette" aria-hidden="true"></div>
+
+    <div class="tm-caption" id="tm-caption" aria-live="polite" hidden>
+      <p class="tm-caption__eyebrow"><span id="tm-cap-num">Chapter 1 of 5</span><span class="tm-dot" aria-hidden="true"></span><span id="tm-cap-date"></span></p>
+      <h1 class="tm-caption__title" id="tm-cap-title">72 hours before</h1>
+      <p class="tm-caption__body" id="tm-cap-body"></p>
+      <p class="tm-caption__source" id="tm-cap-source"></p>
+    </div>
+
+    <a class="tm-prov" id="tm-prov" href="#tm-provenance" hidden>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 7.2v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="4.9" r="0.95" fill="currentColor"/></svg>
+      <span id="tm-prov-text">Reconstructed from published orbital parameters</span>
+    </a>
+
+    <aside class="tm-readout glass" id="tm-readout" aria-live="polite" hidden></aside>
+
+    <div class="tm-intro" id="tm-intro">
+      <div class="tm-intro__inner">
+        <p class="tm-intro__eyebrow">Time Machine</p>
+        <h2 class="tm-intro__title">10 February 2009</h2>
+        <p class="tm-intro__lede" id="tm-intro-lede">Two satellites, one crossing over northern Siberia. Go back three days, watch Kessler flag it, then watch what a collision leaves behind.</p>
+        <div class="tm-intro__actions">
+          <button class="btn btn--primary btn--lg" type="button" id="tm-start" disabled>
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>
+            <span id="tm-start-label">Loading the replay…</span>
+          </button>
+          <span class="tm-intro__meta" id="tm-intro-meta">About 70 seconds · space to play or pause, arrow keys to change chapter</span>
+        </div>
+        <p class="tm-intro__error" id="tm-intro-error" hidden></p>
+      </div>
+    </div>
+
+    <div class="tm-end" id="tm-end" hidden>
+      <div class="tm-end__inner">
+        <p class="tm-end__eyebrow">Why Kessler exists</p>
+        <h2 class="tm-end__title">Kessler watches every crossing, so the next one is flagged days ahead, while there is still time to move.</h2>
+        <p class="tm-end__body">In 1978 Donald Kessler warned that collisions would create debris that causes more collisions. This product is named after that warning.</p>
+        <div class="tm-end__actions">
+          <a class="btn btn--primary btn--lg" href="/">See today's close approaches</a>
+          <a class="btn btn--lg tm-end__secondary" href="/start.html">Protect a satellite</a>
+          <button class="btn btn--ghost btn--lg" type="button" id="tm-replay">Replay</button>
+        </div>
+        <p class="tm-end__source">Kessler and Cour-Palais, Journal of Geophysical Research, 1978</p>
+      </div>
+    </div>
+
+    <div class="tm-transport glass" id="tm-transport" hidden>
+      <button class="tm-play" id="tm-play" type="button" aria-label="Play" aria-pressed="false">
+        <svg class="tm-play__i tm-play__i--play" viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 2.8v10.4L13 8z" fill="currentColor"/></svg>
+        <svg class="tm-play__i tm-play__i--pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.6" y="2.8" width="3" height="10.4" rx="1" fill="currentColor"/><rect x="9.4" y="2.8" width="3" height="10.4" rx="1" fill="currentColor"/></svg>
+      </button>
+      <div class="tm-clock">
+        <span class="tm-clock__main" id="tm-clock-main">—</span>
+        <span class="tm-clock__sub" id="tm-clock-sub">—</span>
+      </div>
+      <div class="tm-track">
+        <div class="tm-track__bar" id="tm-track-bar">
+          <input class="tm-scrub" id="tm-scrub" type="range" min="0" max="1000" step="1" value="0"
+                 aria-label="Replay position" aria-valuetext="">
+          <div class="tm-track__segs" id="tm-segs" aria-hidden="true"></div>
+        </div>
+        <ol class="tm-chapters" id="tm-chapters" aria-label="Chapters"></ol>
+        <p class="tm-track__now" id="tm-track-now" aria-hidden="true"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap tm-notes" id="tm-notes" aria-labelledby="tm-notes-title" hidden>
+    <div class="page-head">
+      <div>
+        <h2 class="title-lg" id="tm-notes-title">About this replay</h2>
+        <p>What is published, what is reconstructed, and what is a model.</p>
+      </div>
+    </div>
+    <div class="tm-notes__grid">
+      <article class="panel tm-note" id="tm-provenance">
+        <div class="panel__hd"><span class="panel__title">Orbits</span><span class="panel__meta"><span class="chip chip--type" id="tm-note-prov-chip">Reconstructed</span></span></div>
+        <div class="panel__bd">
+          <p class="tm-note__p" id="tm-note-prov"></p>
+          <p class="tm-note__p tm-note__hint" id="tm-note-hint"></p>
+          <table class="kv" id="tm-note-objects"></table>
+        </div>
+      </article>
+      <article class="panel tm-note">
+        <div class="panel__hd"><span class="panel__title">How Kessler flagged it</span><span class="panel__meta" id="tm-note-screen-meta"></span></div>
+        <div class="panel__bd">
+          <p class="tm-note__p" id="tm-note-screen"></p>
+          <div class="tbl-scroll"><table class="tbl tm-note__tbl" id="tm-note-history"></table></div>
+        </div>
+      </article>
+      <article class="panel tm-note">
+        <div class="panel__hd"><span class="panel__title">The debris cloud</span><span class="panel__meta">Illustrative model</span></div>
+        <div class="panel__bd">
+          <p class="tm-note__p" id="tm-note-debris"></p>
+          <ul class="tm-note__list" id="tm-note-debris-list"></ul>
+        </div>
+      </article>
+      <article class="panel tm-note">
+        <div class="panel__hd"><span class="panel__title">Sources</span></div>
+        <div class="panel__bd">
+          <ul class="tm-note__list tm-note__sources" id="tm-note-sources"></ul>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<footer class="statusline">
+  <span>Time Machine replays a historical event through Kessler's live screening code</span>
+  <span class="spacer"></span>
+  <span>Kessler · orbital risk</span>
+</footer>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/earthtex.js"></script>
+<script src="js/replay.js"></script>
+</body>
+</html>

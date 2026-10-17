@@ -1,0 +1,26 @@
+{
+  "analysis": "P5 corrected resampled t-test",
+  "t_naive": -10.23,
+  "J": 505,
+  "test_frac": 0.2,
+  "p_naive": 1.9059461876117134e-22,
+  "factor": 0.08864844143558724,
+  "t_corrected": -0.9068735558860576,
+  "p_corrected": 0.3649070356565827,
+  "mean_f2_gain": 0.007649999999999935,
+  "implied_sd_per_split": 0.01680472811974261,
+  "f2_gain_ci95_corrected": [
+    -0.008923222615632834,
+    0.024223222615632704
+  ],
+  "f2_gain_pct": 1.275701635899734,
+  "f2_gain_pct_ci95_corrected": [
+    -1.4880221814719485,
+    4.039425453271416
+  ],
+  "code": {
+    "commit": "948ad3a4214fc2763be64505f1236384f89599a9",
+    "dirty": false
+  },
+  "runtime_s": 0.6
+}

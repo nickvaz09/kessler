@@ -1,0 +1,189 @@
+{
+  "benchmark": {
+    "name": "ESA Kelvins Collision Avoidance Challenge (2019)",
+    "metric": "L = MSE_HR / F2 (lower is better)",
+    "test_events": 2167,
+    "test_high_risk": 150,
+    "teams": 97
+  },
+  "fidelity": {
+    "L": {
+      "lab": 0.694,
+      "published": 0.694
+    },
+    "mse_hr": {
+      "lab": 0.5129,
+      "published": 0.513
+    },
+    "f2": {
+      "lab": 0.7391,
+      "published": 0.739
+    },
+    "reproduces_published": true
+  },
+  "vigil": {
+    "model": "hurdle_lrp_serving_bench",
+    "L": 0.6611,
+    "delta_pct_vs_baseline": -4.73,
+    "ci975_pct": [
+      -14.02,
+      3.58
+    ],
+    "gate_status": "not_passed",
+    "placement": 10,
+    "locked_before_testing": true,
+    "decision": "set for the official test's published class mix (150 of 2,167 high-risk)",
+    "code": "280ce55c212c352110a168ad501cbea0f90a20d9"
+  },
+  "baseline": {
+    "name": "Latest-risk baseline",
+    "L": 0.694
+  },
+  "esa_model": {
+    "L": 0.684,
+    "rank": 11,
+    "models": 5000,
+    "source": "Uriot et al. 2022, Astrodynamics 6:121\u2013140, \u00a76.1"
+  },
+  "leaderboard": [
+    {
+      "rank": 1,
+      "team": "sesc",
+      "L": 0.55531
+    },
+    {
+      "rank": 2,
+      "team": "dietmarw",
+      "L": 0.574456
+    },
+    {
+      "rank": 3,
+      "team": "Magpies",
+      "L": 0.584892
+    },
+    {
+      "rank": 4,
+      "team": "Vidente",
+      "L": 0.609829
+    },
+    {
+      "rank": 5,
+      "team": "DeCRA",
+      "L": 0.614875
+    },
+    {
+      "rank": 6,
+      "team": "Valis",
+      "L": 0.627369
+    },
+    {
+      "rank": 7,
+      "team": "DunderMifflin",
+      "L": 0.627583
+    },
+    {
+      "rank": 8,
+      "team": "Spacemeister",
+      "L": 0.651616
+    },
+    {
+      "rank": 9,
+      "team": "GrandpaBem",
+      "L": 0.651736
+    },
+    {
+      "rank": 10,
+      "team": "TS",
+      "L": 0.672828
+    },
+    {
+      "rank": 11,
+      "team": "AndrewLouw",
+      "L": 0.689373
+    },
+    {
+      "rank": 12,
+      "team": "ANTwork",
+      "L": 0.693964
+    }
+  ],
+  "early_warning": {
+    "research": {
+      "model": "e_hurdle",
+      "pr_auc": 0.1261,
+      "baseline_pr_auc": 0.065,
+      "ci95": [
+        0.0141,
+        0.1281
+      ],
+      "escalations": 54,
+      "gate_status": "passed",
+      "needs": "the full CDM data (including covariance) that Kessler's live feed lacks",
+      "latest_risk_pr_auc": 0.0982,
+      "delta_vs_latest_risk": 0.0278,
+      "ci95_vs_latest_risk": [
+        -0.027,
+        0.0767
+      ],
+      "roc_auc": 0.9197,
+      "latest_risk_roc_auc": 0.8619,
+      "roc_ci95_vs_latest_risk": [
+        0.0159,
+        0.1072
+      ],
+      "reading": "not shown: against the latest risk itself it ranks quiet events better overall, but not at the top of the list"
+    },
+    "app_features": {
+      "model": "e_hurdle_eserving",
+      "pr_auc": 0.0868,
+      "baseline_pr_auc": 0.065,
+      "ci975": [
+        -0.0142,
+        0.0854
+      ],
+      "gate_status": "not_passed",
+      "latest_risk_pr_auc": 0.0982
+    }
+  },
+  "false_alarms": {
+    "model": "VIGIL's classifier, all CDM fields (research build)",
+    "calls": 486,
+    "stay_high_risk": 162,
+    "keep_true_calls_pct": 95,
+    "removed_pct": 27.9,
+    "ci95_pct": [
+      20.1,
+      35.5
+    ],
+    "public_counterparts_removed_pct": 20.1,
+    "latest_risk_removed_pct": 9.3,
+    "latest_risk_ci95_pct": [
+      5.4,
+      14.9
+    ],
+    "evaluation": "pooled cross-validation over 10,460 ESA events (the latest-risk filter is post hoc)"
+  },
+  "live_model_note": "The console scores live events with VIGIL-0.4; these are research builds evaluated in the VIGIL Lab.",
+  "sources": [
+    {
+      "path": "reports/vigil-lab-r2-sealed/lab_report.json",
+      "sha256": "6bdd3c474c92965ce5737f23aa7721fd204d7574943ba5ff9d8f4ac48a15b650"
+    },
+    {
+      "path": "reports/vigil-lab-pooled/lab_report.json",
+      "sha256": "273afc8e674bb10ab9ce090c2377e77f25669d5faebaee4fd488e1403989719a"
+    },
+    {
+      "path": "reports/vigil-lab-r2-pooled/lab_report.json",
+      "sha256": "164849f83495c86a7a3c5ee23f76658a22f7fb4e367fb9b9dc11d11d52ed876e"
+    },
+    {
+      "path": "reports/paper/public.json",
+      "sha256": "58050ae0c9d8e1687fc4e42a3b6044bad365a8a19f4f360d70effb2e32440459"
+    },
+    {
+      "path": "reports/paper/ew_posthoc.json",
+      "sha256": "729cfc5a9633a3cf9cf2add40503a5f835952aeeee84d534d9b574a4949ba809"
+    }
+  ]
+}

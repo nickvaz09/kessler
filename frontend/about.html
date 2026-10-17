@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('kessler.theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+  <script>document.documentElement.classList.add('ab-js');</script>
+  <meta name="theme-color" content="#000000">
+  <title>Kessler · About</title>
+  <meta name="description" content="Kessler is mission control for everyone else: collision-risk monitoring for university CubeSat teams and smallsat startups.">
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages/about.css">
+  <link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Kessler home"><svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg><span class="brand__word">Kessler</span></a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="/">Overview</a>
+    <a href="/alerts.html">Alerts</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/replay.html">Time Machine</a>
+    <a href="/model.html">Model</a>
+    <a href="/about.html" class="active" aria-current="page">About</a>
+  </nav>
+  <div class="topbar__right">
+    <span id="hdr-status"></span>
+    <a class="wall-link" href="/wall.html">Ops wall</a>
+    <span class="live-pill" id="live-pill" role="status"><span class="live-pill__dot"></span><span class="live-pill__text">Connecting…</span></span>
+    <span id="utc-clock"></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle appearance"></button>
+    <a class="cta" href="/start.html"><span class="cta__long">Protect a satellite</span><span aria-hidden="true">＋</span></a>
+  </div>
+</header>
+
+<main class="ab">
+
+  <!-- Hero ----------------------------------------------------------------- -->
+  <section class="ab-hero" aria-labelledby="hero-title">
+    <div class="ab-hero__copy">
+      <h1 class="ab-hero__title" id="hero-title">Mission control<br>for everyone else.</h1>
+      <p class="ab-hero__lede">Kessler watches the sky for university CubeSat teams and smallsat startups.
+        It screens your satellite against every tracked object, scores the risk, and tells you in plain language what needs attention.</p>
+      <div class="ab-hero__cta">
+        <a class="btn btn--primary btn--lg" href="/start.html">Protect a satellite</a>
+        <a class="btn btn--ghost btn--lg" href="/">See the live overview <span aria-hidden="true">›</span></a>
+      </div>
+    </div>
+    <div class="ab-hero__globe" aria-hidden="true">
+      <canvas id="globe-canvas"></canvas>
+    </div>
+  </section>
+
+  <!-- Problem (live numbers) ------------------------------------------------ -->
+  <section class="ab-sec ab-problem" aria-labelledby="problem-title">
+    <div class="ab-inner">
+      <h2 class="ab-title ab-reveal" id="problem-title">The sky is crowded.<br><span class="ab-title__dim">Small teams fly alone.</span></h2>
+      <p class="ab-lede ab-reveal">Large operators have people watching conjunction warnings around the clock.
+        A university team has a handful of students, a ground station and a semester. Here is what this Kessler server is watching right now.</p>
+
+      <div class="ab-live ab-reveal" id="live">
+        <div class="ab-live__hd">
+          <span class="ab-live__meta" id="live-meta"></span>
+        </div>
+        <div class="ab-nums" id="live-nums">
+          <div class="ab-num">
+            <div class="ab-num__value tnum" id="n-catalog" data-count>—</div>
+            <div class="ab-num__label">objects tracked</div>
+          </div>
+          <div class="ab-num">
+            <div class="ab-num__value tnum" id="n-active" data-count>—</div>
+            <div class="ab-num__label" id="n-active-label">close approaches in the next 72 hours</div>
+          </div>
+          <div class="ab-num">
+            <div class="ab-num__value tnum" id="n-attn" data-count>—</div>
+            <div class="ab-num__label">flagged for attention</div>
+          </div>
+        </div>
+        <p class="ab-live__note" id="live-note" hidden></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works ------------------------------------------------------------ -->
+  <section class="ab-sec" aria-labelledby="how-title">
+    <div class="ab-inner">
+      <h2 class="ab-title ab-reveal" id="how-title">From raw orbits to a clear answer.</h2>
+      <ol class="ab-flow">
+        <li class="ab-flow__step ab-reveal" style="--d:0ms">
+          <div class="ab-flow__vis">
+            <svg viewBox="0 0 120 72" aria-hidden="true"><g class="v-line"><path d="M14 20h92M14 32h78M14 44h92M14 56h60"/></g><path class="v-acc" d="M14 20h34"/></svg>
+          </div>
+          <span class="ab-flow__n">1</span>
+          <h3>Ingest</h3>
+          <p>Pulls public element sets from CelesTrak and Space-Track, plus conjunction messages when Space-Track has them.</p>
+        </li>
+        <li class="ab-flow__step ab-reveal" style="--d:80ms">
+          <div class="ab-flow__vis">
+            <svg viewBox="0 0 120 72" aria-hidden="true"><g class="v-line"><ellipse cx="60" cy="36" rx="46" ry="15" transform="rotate(-14 60 36)"/><ellipse cx="60" cy="36" rx="46" ry="15" transform="rotate(22 60 36)"/></g><circle class="v-acc-fill" cx="101.2" cy="32.92" r="4"/><circle class="v-fill" cx="100.37" cy="44.79" r="3"/></svg>
+          </div>
+          <span class="ab-flow__n">2</span>
+          <h3>Screen</h3>
+          <p>Propagates every orbit with SGP4 across the next 72 hours and finds each pass closer than 15 km. When a solar storm swells the upper atmosphere, it widens each prediction by how far the extra drag can push it.</p>
+        </li>
+        <li class="ab-flow__step ab-reveal" style="--d:160ms">
+          <div class="ab-flow__vis">
+            <svg viewBox="0 0 120 72" aria-hidden="true"><g class="v-line"><path d="M14 58h92"/></g><g class="v-bar"><rect x="22" y="40" width="12" height="18" rx="3"/><rect x="42" y="30" width="12" height="28" rx="3"/><rect x="62" y="36" width="12" height="22" rx="3"/></g><rect class="v-acc-fill" x="82" y="16" width="12" height="42" rx="3"/></svg>
+          </div>
+          <span class="ab-flow__n">3</span>
+          <h3>Score</h3>
+          <p>Estimates collision probability, then VIGIL, a model trained on ESA conjunction data, predicts where the risk is heading.</p>
+        </li>
+        <li class="ab-flow__step ab-reveal" style="--d:240ms">
+          <div class="ab-flow__vis">
+            <svg viewBox="0 0 120 72" aria-hidden="true"><g class="v-line"><path d="M20 16h80a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8H48l-14 11V52H20a8 8 0 0 1-8-8V24a8 8 0 0 1 8-8z"/></g><path class="v-acc" d="M26 30h50"/><path class="v-soft" d="M26 40h36"/></svg>
+          </div>
+          <span class="ab-flow__n">4</span>
+          <h3>Explain</h3>
+          <p>Kessler AI turns the numbers into a short brief in plain language, and names the model behind every risk claim.</p>
+        </li>
+        <li class="ab-flow__step ab-reveal" style="--d:320ms">
+          <div class="ab-flow__vis">
+            <svg viewBox="0 0 120 72" aria-hidden="true"><g class="v-line"><path d="M12 50c24 0 40-4 58-18"/></g><path class="v-acc" d="M70 32c10-8 22-14 38-16"/><path class="v-acc" d="M100 11l8 5-6 7"/><circle class="v-fill" cx="70" cy="32" r="3.5"/></svg>
+          </div>
+          <span class="ab-flow__n">5</span>
+          <h3>Act</h3>
+          <p>Replay the encounter in the simulator, try a what-if burn, and keep your satellites on watch.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- VIGIL ----------------------------------------------------------------- -->
+  <section class="ab-sec ab-vigil" aria-labelledby="vigil-title">
+    <div class="ab-inner ab-split">
+      <div>
+        <h2 class="ab-title ab-reveal" id="vigil-title">A model that has to beat the obvious answer.</h2>
+        <p class="ab-lede ab-reveal">The hardest baseline in conjunction forecasting is simply assuming the latest risk stays the same.
+          VIGIL only ships if it beats that carry-forward baseline on held-out events, and every prediction records the model version that made it.</p>
+        <p class="ab-reveal"><a class="ab-link" href="/model.html">Read the model card <span aria-hidden="true">›</span></a></p>
+      </div>
+      <figure class="vg ab-reveal" id="vigil">
+        <div id="vigil-body"><p class="vg-empty">Loading the model card…</p></div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- Kessler AI --------------------------------------------------------------- -->
+  <section class="ab-sec ab-ai" aria-labelledby="ai-title">
+    <div class="ab-inner">
+      <h2 class="ab-title ab-reveal" id="ai-title">Ask a question.<br><span class="ab-title__dim">It works the console for you.</span></h2>
+      <div class="ab-ai__grid">
+        <div class="ab-ai__point ab-reveal" style="--d:0ms">
+          <div class="ab-ai__big tnum" id="ai-tools">25</div>
+          <h3>tools</h3>
+          <p>From searching the catalog and explaining a risk score to optimizing a maneuver and writing a printable report.</p>
+        </div>
+        <div class="ab-ai__point ab-reveal" style="--d:90ms">
+          <div class="ab-ai__icon" aria-hidden="true"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="11"/><path d="M16 10v6l4 3"/></svg></div>
+          <h3>Answers from live data</h3>
+          <p>It is built to fetch every number it states from this server, and its risk claims carry the model version that produced them.</p>
+        </div>
+        <div class="ab-ai__point ab-reveal" style="--d:180ms">
+          <div class="ab-ai__icon" aria-hidden="true"><svg viewBox="0 0 32 32"><rect x="5" y="7" width="22" height="16" rx="3"/><path d="M13 27h6M16 23v4"/><path d="M12 15l3 3 5-6"/></svg></div>
+          <h3>Drives the interface</h3>
+          <p>It can open the simulator, select objects on the globe, filter the tables and fill in forms while you watch.</p>
+        </div>
+      </div>
+      <ul class="ab-tools ab-reveal" id="tool-list" aria-label="Kessler AI tools"></ul>
+      <p class="ab-fine ab-reveal">Runs on Anthropic’s Claude on the server. Without an API key, every other part of Kessler still works.</p>
+    </div>
+  </section>
+
+  <!-- Time Machine teaser --------------------------------------------------- -->
+  <section class="ab-sec" aria-labelledby="tm-title">
+    <div class="ab-inner">
+      <a class="ab-tm ab-reveal" href="/replay.html">
+        <div class="ab-tm__copy">
+          <h2 class="ab-tm__title" id="tm-title">Go back to the moment it happened.</h2>
+          <p class="ab-tm__lede">Replay encounters minute by minute and watch the risk evolve. Reconstructed scenarios are always labeled as reconstructions, with their sources.</p>
+          <span class="ab-link">Open Time Machine <span aria-hidden="true">›</span></span>
+        </div>
+        <div class="ab-tm__vis" aria-hidden="true">
+          <svg viewBox="0 0 360 200" preserveAspectRatio="xMidYMid meet">
+            <g class="tm-orbits"><ellipse cx="180" cy="86" rx="165" ry="36" transform="rotate(-14 180 86)"/><ellipse cx="180" cy="86" rx="150" ry="50" transform="rotate(24 180 86)"/></g>
+            <circle class="tm-earth" cx="180" cy="86" r="30"/>
+            <circle class="tm-burst" id="tm-burst" cx="283.25" cy="89.90" r="4"/>
+            <circle class="tm-a" id="tm-a" cx="283.25" cy="89.90" r="4"/><circle class="tm-b" id="tm-b" cx="281.39" cy="88.37" r="3.2"/>
+            <g class="tm-track"><path d="M40 176h280"/></g>
+            <path class="tm-played" id="tm-played" d="M40 176H270"/>
+            <path class="tm-tick" d="M270 186v6"/>
+            <circle class="tm-knob" id="tm-knob" cx="270" cy="176" r="6"/>
+          </svg>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Honest by design ------------------------------------------------------ -->
+  <section class="ab-sec" aria-labelledby="honest-title">
+    <div class="ab-inner">
+      <h2 class="ab-title ab-reveal" id="honest-title">Never a false all-clear.</h2>
+      <p class="ab-lede ab-reveal">A safety tool that guesses is worse than none. These rules hold on every screen.</p>
+      <div class="ab-rules">
+        <div class="ab-rule ab-reveal" style="--d:0ms"><h3>No invented numbers</h3><p>Every figure on screen comes from the backend or a documented constant.</p></div>
+        <div class="ab-rule ab-reveal" style="--d:60ms"><h3>Failures are loud</h3><p>If a catalog refresh fails or data is missing, Kessler says so instead of showing an empty, calm board.</p></div>
+        <div class="ab-rule ab-reveal" style="--d:120ms"><h3>Every risk claim is traceable</h3><p>Predictions are stored with the model version that produced them.</p></div>
+        <div class="ab-rule ab-reveal" style="--d:180ms"><h3>Estimates say so</h3><p>Screening probability assumes TLE-class uncertainty and is labeled that way. A solar storm widens that uncertainty and never lowers a risk level. Operator covariance is used when Space-Track provides it.</p></div>
+        <div class="ab-rule ab-reveal" style="--d:240ms"><h3>Demo data is flagged</h3><p>Synthetic message sequences used for trend charts are stored separately and marked in the interface.</p></div>
+        <div class="ab-rule ab-reveal" style="--d:300ms"><h3>Your satellites stay yours</h3><p>Objects you add live in your fleet and are screened on demand. They never enter the public catalog or its event tables.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Who it's for ------------------------------------------------------------ -->
+  <section class="ab-sec" aria-labelledby="who-title">
+    <div class="ab-inner">
+      <h2 class="ab-title ab-reveal" id="who-title">Built for teams without a control room.</h2>
+      <div class="ab-who">
+        <div class="ab-who__card ab-reveal" style="--d:0ms">
+          <h3>University CubeSat teams</h3>
+          <p>Paste your TLE or find your satellite, get a one-sentence verdict, and a brief you can forward to your advisor.</p>
+        </div>
+        <div class="ab-who__card ab-reveal" style="--d:90ms">
+          <h3>Smallsat startups</h3>
+          <p>Keep a fleet on watch, see what changed since the last refresh, and plan a what-if burn before you call anyone.</p>
+        </div>
+        <div class="ab-who__card ab-reveal" style="--d:180ms">
+          <h3>Students and the curious</h3>
+          <p>Explore the live globe, replay encounters, and see how orbital risk is actually estimated, caveats included.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="ab-foot">
+  <div class="ab-inner ab-foot__grid">
+    <div>
+      <div class="ab-foot__brand">Kessler</div>
+      <p>Collision-risk monitoring for satellites. Named after the Kessler syndrome, the cascade of collisions in low Earth orbit it exists to help prevent.</p>
+    </div>
+    <div>
+      <h4>Data</h4>
+      <ul>
+        <li><a href="https://celestrak.org" rel="noopener">CelesTrak</a> — public element sets</li>
+        <li><a href="https://www.space-track.org" rel="noopener">Space-Track.org</a> — catalog and conjunction messages</li>
+        <li><a href="https://zenodo.org/record/4463683" rel="noopener">ESA Kelvins</a> — collision avoidance challenge dataset</li>
+        <li>Natural Earth coastlines · NASA Blue Marble and Black Marble imagery</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Kessler AI</h4>
+      <p>The in-app assistant runs on Anthropic’s Claude API.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/about.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>

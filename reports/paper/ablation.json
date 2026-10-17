@@ -1,0 +1,170 @@
+{
+  "analysis": "P4 VIGIL-E feature ablation (pooled CV)",
+  "repeats": 5,
+  "folds": 5,
+  "bootstrap": 1000,
+  "seed": 42,
+  "n_events": 14109,
+  "n_candidates": 9974,
+  "n_escalations": 54,
+  "feature_counts": {
+    "A0_all_benchmark": 153,
+    "A1_without_covariance": 90,
+    "A2_serving_plus_covariance": 74,
+    "_covariance": 63
+  },
+  "covariance_features": [
+    "l_max_risk_estimate",
+    "l_max_risk_scaling",
+    "l_t_ct_r",
+    "l_t_cn_r",
+    "l_t_cn_t",
+    "l_t_crdot_r",
+    "l_t_crdot_t",
+    "l_t_crdot_n",
+    "l_t_ctdot_r",
+    "l_t_ctdot_t",
+    "l_t_ctdot_n",
+    "l_t_ctdot_rdot",
+    "l_t_cndot_r",
+    "l_t_cndot_t",
+    "l_t_cndot_n",
+    "l_t_cndot_rdot",
+    "l_t_cndot_tdot",
+    "l_c_ct_r",
+    "l_c_cn_r",
+    "l_c_cn_t",
+    "l_c_crdot_r",
+    "l_c_crdot_t",
+    "l_c_crdot_n",
+    "l_c_ctdot_r",
+    "l_c_ctdot_t",
+    "l_c_ctdot_n",
+    "l_c_ctdot_rdot",
+    "l_c_cndot_r",
+    "l_c_cndot_t",
+    "l_c_cndot_n",
+    "l_c_cndot_rdot",
+    "l_c_cndot_tdot",
+    "l_mahalanobis_distance",
+    "l_t_position_covariance_det_slog10",
+    "l_c_position_covariance_det_slog10",
+    "l_t_sigma_r",
+    "l_c_sigma_r",
+    "l_t_sigma_t",
+    "l_c_sigma_t",
+    "l_t_sigma_n",
+    "l_c_sigma_n",
+    "l_t_sigma_rdot",
+    "l_c_sigma_rdot",
+    "l_t_sigma_tdot",
+    "l_c_sigma_tdot",
+    "l_t_sigma_ndot",
+    "l_c_sigma_ndot",
+    "h_log_sigma_rate",
+    "h_c_log_sigma_rate",
+    "h_sigma_shrink_to_eval",
+    "h_maha_slope",
+    "h_headroom_mre",
+    "p_m2",
+    "p_log_det_c2",
+    "p_dilution_index",
+    "p_log10_pcmax_gap",
+    "p_log10_hbr_implied",
+    "p_sigma_ratio_t_c",
+    "p_proj_risk_s50",
+    "p_proj_risk_s25",
+    "p_proj_risk_trend",
+    "p_escalation_headroom",
+    "p_m2_log_ratio"
+  ],
+  "summary": {
+    "A0_all_benchmark": {
+      "pr_auc": 0.12606428956217197,
+      "roc_auc": 0.9196841397849462,
+      "pauc_fpr10": 0.7415798119851601,
+      "recall_at_budget": 0.5185185185185185
+    },
+    "A1_without_covariance": {
+      "pr_auc": 0.12980272639732607,
+      "roc_auc": 0.9260282258064517,
+      "pauc_fpr10": 0.7436824026913161,
+      "recall_at_budget": 0.5148148148148148
+    },
+    "A2_serving_plus_covariance": {
+      "pr_auc": 0.12479817493121773,
+      "roc_auc": 0.910165770609319,
+      "pauc_fpr10": 0.7349379833993587,
+      "recall_at_budget": 0.5111111111111112
+    },
+    "e_logit": {
+      "pr_auc": 0.06497789936874059,
+      "roc_auc": 0.8531098790322581,
+      "pauc_fpr10": 0.7199938690813055,
+      "recall_at_budget": 0.5148148148148147
+    }
+  },
+  "contrasts": {
+    "A0_minus_A1": {
+      "mean": -0.0037384368351541103,
+      "ci95": [
+        -0.024627415173193765,
+        0.02326176117828037
+      ],
+      "sd_boot": 0.011806030913220996,
+      "mde": 0.033056886557018786
+    },
+    "A1_minus_logit": {
+      "mean": 0.06482482702858547,
+      "ci95": [
+        0.015181813528894795,
+        0.1338229953988128
+      ],
+      "sd_boot": 0.030156513967652954,
+      "mde": 0.08443823910942827
+    },
+    "A2_minus_logit": {
+      "mean": 0.05982027556247711,
+      "ci95": [
+        0.012782885549836512,
+        0.11932819710344038
+      ],
+      "sd_boot": 0.028086441260743288,
+      "mde": 0.0786420355300812
+    },
+    "A2_minus_A0": {
+      "mean": -0.0012661146309542516,
+      "ci95": [
+        -0.02975245013046798,
+        0.017563939558109004
+      ],
+      "sd_boot": 0.011899782558618288,
+      "mde": 0.033319391164131205
+    },
+    "A0_minus_logit": {
+      "mean": 0.06108639019343136,
+      "ci95": [
+        0.01621385929627105,
+        0.1322040724794329
+      ],
+      "sd_boot": 0.030642476569531802,
+      "mde": 0.08579893439468904
+    }
+  },
+  "reading": "inconclusive",
+  "reference_pooled_reports": {
+    "reports/vigil-lab-pooled/lab_report.json": {
+      "e_hurdle": 0.12606428956217197,
+      "e_logit": 0.06497789936874059
+    },
+    "reports/vigil-lab-r2-pooled/lab_report.json": {
+      "e_hurdle": 0.12606428956217197,
+      "e_logit": 0.06497789936874059
+    }
+  },
+  "code": {
+    "commit": "948ad3a4214fc2763be64505f1236384f89599a9",
+    "dirty": false
+  },
+  "runtime_s": 662.9
+}

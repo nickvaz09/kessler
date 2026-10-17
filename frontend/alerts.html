@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('kessler.theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+  <meta name="theme-color" content="#000000">
+  <title>Kessler · Alerts</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages/alerts.css">
+  <link rel="stylesheet" href="css/simulator.css">
+  <link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Kessler home"><svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg><span class="brand__word">Kessler</span></a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="/">Overview</a>
+    <a href="/alerts.html" class="active" aria-current="page">Alerts</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/replay.html">Time Machine</a>
+    <a href="/model.html">Model</a>
+    <a href="/about.html">About</a>
+  </nav>
+  <div class="topbar__right">
+    <span id="hdr-status"></span>
+    <a class="wall-link" href="/wall.html">Ops wall</a>
+    <span class="live-pill" id="live-pill" role="status"><span class="live-pill__dot"></span><span class="live-pill__text">Connecting…</span></span>
+    <span id="utc-clock"></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle appearance"></button>
+    <a class="cta" href="/start.html"><span class="cta__long">Protect a satellite</span><span aria-hidden="true">＋</span></a>
+  </div>
+</header>
+
+<main class="wrap alerts">
+
+  <div class="page-head">
+    <div>
+      <h1>Alerts</h1>
+      <p>Close approaches rated elevated or critical, most serious first. Checked every minute.</p>
+    </div>
+  </div>
+
+  <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+  <div class="stats alerts-summary" id="alerts-summary">
+    <div class="stat">
+      <div class="stat__label">Active alerts</div>
+      <div class="stat__value" id="sum-active">—</div>
+      <div class="stat__sub">Elevated and critical</div>
+    </div>
+    <div class="stat">
+      <div class="stat__label">Critical</div>
+      <div class="stat__value" id="sum-critical">—</div>
+      <div class="stat__sub">Odds of 1 in 10,000 or higher</div>
+    </div>
+    <div class="stat">
+      <div class="stat__label">Elevated</div>
+      <div class="stat__value" id="sum-elevated">—</div>
+      <div class="stat__sub">1 in a million to 1 in 10,000</div>
+    </div>
+    <div class="stat">
+      <div class="stat__label">Last checked</div>
+      <div class="stat__value stat__value--sm" id="sum-asof">—</div>
+      <div class="stat__sub" id="sum-window">Screening the next 72 hours</div>
+    </div>
+  </div>
+
+  <section class="panel panel--flush alerts-panel" aria-labelledby="queue-title">
+    <div class="panel__hd">
+      <h2 class="panel__title" id="queue-title">Inbox</h2>
+      <div class="seg" role="group" aria-label="Filter alerts by risk" id="alert-filter">
+        <button class="btn" type="button" data-f="all" aria-pressed="true">All</button>
+        <button class="btn" type="button" data-f="critical" aria-pressed="false">Critical</button>
+        <button class="btn" type="button" data-f="elevated" aria-pressed="false">Elevated</button>
+      </div>
+      <span class="panel__meta" id="queue-meta"></span>
+    </div>
+    <div id="alert-list" class="alert-list" aria-live="polite">
+      <div class="alert-skel"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+    </div>
+  </section>
+
+  <section class="panel panel--flush panel--reentry" aria-labelledby="reentry-title">
+    <div class="panel__hd">
+      <h2 class="panel__title" id="reentry-title">Decaying orbits</h2>
+      <span class="panel__meta"><span id="reentry-count"></span></span>
+    </div>
+    <p class="reentry-note">Objects with a perigee below 250 km, losing altitude fastest first. Windows are rough estimates from recent element sets — not re-entry predictions.</p>
+    <div class="tbl-scroll" id="reentry-wrap" hidden>
+      <table class="tbl tbl--reentry">
+        <thead>
+          <tr>
+            <th>Object</th>
+            <th class="num">Perigee</th>
+            <th class="num">Losing</th>
+            <th>Estimated window</th>
+            <th><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody id="reentry-body"></tbody>
+      </table>
+    </div>
+    <button class="load-more" type="button" id="reentry-more" hidden></button>
+    <div class="empty" id="reentry-empty">Loading decaying orbits…</div>
+  </section>
+
+</main>
+
+<footer class="statusline">
+  <span>Data from CelesTrak and Space-Track · Screened with SGP4 over a <span id="sl-window">72</span>-hour window</span>
+  <span id="sl-demo" hidden>Includes demo conjunction messages</span>
+  <span id="sl-auto" hidden></span>
+  <span class="spacer"></span>
+  <span>Kessler</span>
+</footer>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dropdown.js"></script>
+<script src="js/sparkline.js"></script>
+<script src="js/alerts.js"></script>
+<script src="js/early_warnings.js"></script>
+<!-- charts/orbit/track/sim modules: the Kessler AI assistant's trajectory
+     modal and open_simulator action work on every page -->
+<script src="js/charts.js"></script>
+<script src="js/orbit_plot.js"></script>
+<script src="js/groundtrack.js"></script>
+<script src="js/earthtex.js"></script>
+<script src="js/simviews.js"></script>
+<script src="js/simulator.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>

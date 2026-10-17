@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('kessler.theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+  <meta name="theme-color" content="#000000">
+<title>Kessler · Object</title>
+<link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/pages/object.css">
+<link rel="stylesheet" href="css/simulator.css">
+<link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Kessler home"><svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg><span class="brand__word">Kessler</span></a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="/">Overview</a>
+    <a href="/alerts.html">Alerts</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/replay.html">Time Machine</a>
+    <a href="/model.html">Model</a>
+    <a href="/about.html">About</a>
+  </nav>
+  <div class="topbar__right">
+    <span id="hdr-status"></span>
+    <a class="wall-link" href="/wall.html">Ops wall</a>
+    <span class="live-pill" id="live-pill" role="status"><span class="live-pill__dot"></span><span class="live-pill__text">Connecting…</span></span>
+    <span id="utc-clock"></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle appearance"></button>
+    <a class="cta" href="/start.html"><span class="cta__long">Protect a satellite</span><span aria-hidden="true">＋</span></a>
+  </div>
+</header>
+
+<main class="wrap obj">
+
+  <!-- unknown object / load failure: a friendly card, never a red bar -->
+  <section class="obj-missing panel" id="err" hidden aria-live="polite">
+    <div class="obj-missing__icon" aria-hidden="true"><svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="24" cy="24" r="9"/><ellipse cx="24" cy="24" rx="20" ry="7.5" transform="rotate(-24 24 24)" stroke-opacity=".5"/><circle cx="41" cy="16.5" r="2.2" fill="currentColor" stroke="none"/></svg></div>
+    <h1 class="obj-missing__title" id="err-title">We couldn’t find that object</h1>
+    <p class="obj-missing__text" id="err-text">Check the NORAD id, or search the catalog by name.</p>
+    <form class="obj-find" id="find-form" role="search">
+      <label class="sr-only" for="find-q">Search the catalog</label>
+      <input class="input" id="find-q" type="search" placeholder="Name or NORAD id, e.g. ISS or 25544" autocomplete="off" spellcheck="false">
+      <button class="btn btn--primary" type="submit">Search</button>
+    </form>
+    <div class="obj-find__results" id="find-results" aria-live="polite"></div>
+    <div class="obj-missing__links">
+      <button class="btn btn--ghost" type="button" id="err-retry" hidden>Try again</button>
+      <a class="btn btn--ghost" href="/">Back to overview</a>
+    </div>
+  </section>
+
+  <!-- loading skeleton -->
+  <div class="obj-loading" id="obj-loading" aria-hidden="true">
+    <div class="skeleton" style="width: 90px; height: 14px;"></div>
+    <div class="skeleton" style="width: min(420px, 80%); height: 44px; margin-top: 12px;"></div>
+    <div class="skeleton" style="width: min(320px, 60%); height: 18px; margin-top: 14px;"></div>
+    <div class="obj-loading__tiles">
+      <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+    </div>
+    <div class="skeleton" style="height: 380px; margin-top: 16px; border-radius: 16px;"></div>
+  </div>
+
+  <div id="content" hidden>
+    <header class="obj-hero" id="obj-head"></header>
+
+    <div class="stats obj-stats" id="obj-stats"></div>
+    <!-- what the current storm does to this orbit (api/objects.py
+         space_weather) - a full-width row; hidden without live NOAA data -->
+    <section class="panel k-rise obj-sw" style="--d: 40ms" id="sw-obj" aria-labelledby="sw-obj-title" hidden>
+      <div class="panel__hd">
+        <h2 class="panel__title" id="sw-obj-title">Space weather</h2>
+        <a class="panel__meta obj-sw__link" href="/?view=spaceweather">See it from the Sun</a>
+      </div>
+      <div class="panel__bd obj-sw__bd">
+        <div class="obj-sw__text">
+          <p class="obj-sw__lede" id="sw-obj-lede"></p>
+          <p class="obj-caption" id="sw-obj-note"></p>
+        </div>
+        <div class="obj-sw__grid" id="sw-obj-grid"></div>
+      </div>
+    </section>
+
+    <div class="cols cols--main-side obj-row obj-row--first">
+      <div class="stack">
+        <section class="panel obj-track k-rise" style="--d: 60ms" aria-labelledby="track-title">
+      <div class="panel__hd">
+        <h2 class="panel__title" id="track-title">Ground track</h2>
+        <span class="panel__meta" id="track-meta"></span>
+      </div>
+      <div class="panel__bd">
+        <div class="obj-note" id="track-err" hidden>The ground track isn’t available right now. We’ll keep trying every minute.</div>
+        <div class="chart-box" id="track-box"><canvas id="track-canvas" role="img" aria-label="Map of the ground track over one orbit"></canvas></div>
+        <div class="empty" id="track-empty" hidden>We couldn’t propagate a ground track from this object’s elements.</div>
+        <p class="obj-caption">One orbit from now. The line fades as it looks further ahead; the shaded area is night.</p>
+      </div>
+    </section>
+      </div>
+      <div class="stack">
+        <section class="panel k-rise" style="--d: 120ms" aria-labelledby="el-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="el-title">Orbital elements</h2>
+            <span class="panel__meta" id="el-meta"></span>
+          </div>
+          <div class="panel__bd">
+            <dl class="obj-kv" id="elements"></dl>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="cols cols--main-side obj-row">
+      <div class="stack">
+        <section class="panel k-rise" style="--d: 100ms" aria-labelledby="orbit-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="orbit-title">Orbit</h2>
+            <span class="panel__meta" id="orbit-meta">Drag to rotate</span>
+          </div>
+          <div class="panel__bd">
+            <div class="chart-box"><canvas id="orbit-canvas" aria-label="Orbit around Earth, drag or use the arrow keys to rotate"></canvas></div>
+            <div class="chart-legend" id="orbit-legend" hidden></div>
+          </div>
+        </section>
+      </div>
+      <div class="stack">
+        <section class="panel k-rise" style="--d: 140ms" aria-labelledby="alt-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="alt-title">Altitude over one orbit</h2>
+            <span class="panel__meta" id="alt-meta"></span>
+          </div>
+          <div class="panel__bd">
+            <div class="chart-box" id="alt-box">
+              <canvas id="alt-canvas" role="img" aria-label="Altitude over one orbit"></canvas>
+              <div class="chart-tip" id="alt-tip"></div>
+            </div>
+            <div class="empty" id="alt-empty" hidden>No altitude data yet.</div>
+          </div>
+        </section>
+        <section class="panel k-rise" style="--d: 160ms" aria-labelledby="tle-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="tle-title">Element history</h2>
+            <span class="panel__meta" id="tle-meta"></span>
+          </div>
+          <div class="panel__bd">
+            <p class="obj-caption obj-caption--top">Each two-line element set (TLE) we’ve ingested. Select one to see the raw lines.</p>
+            <ul class="tle-list" id="tle-body"></ul>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div class="cols cols--main-side obj-row">
+      <div class="stack">
+        <section class="panel panel--flush k-rise" style="--d: 180ms" aria-labelledby="conj-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="conj-title">Close approaches</h2>
+            <span class="panel__meta" id="conj-meta"></span>
+          </div>
+          <div class="tbl-scroll" id="conj-wrap">
+            <table class="tbl tbl--conj">
+              <thead>
+                <tr>
+                  <th>Risk</th>
+                  <th>With</th>
+                  <th>Closest approach</th>
+                  <th class="num">Miss distance</th>
+                  <th class="num col-speed">Speed</th>
+                  <th class="num" title="Probability of collision (Pc)">Probability</th>
+                  <th><span class="sr-only">Actions</span></th>
+                </tr>
+              </thead>
+              <tbody id="conj-body"></tbody>
+            </table>
+          </div>
+          <button class="load-more" type="button" id="conj-more" hidden></button>
+          <div class="empty" id="conj-empty" hidden><strong>All quiet</strong>No close approaches found for this object in the screening window.</div>
+        </section>
+
+        <section class="panel k-rise" style="--d: 220ms" aria-labelledby="risk-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="risk-title">Collision probability over time</h2>
+            <span class="panel__meta" id="risk-meta"></span>
+          </div>
+          <div class="panel__bd">
+            <div class="chart-box" id="risk-box">
+              <canvas id="risk-canvas" role="img" aria-label="Collision probability from each conjunction message, log scale"></canvas>
+              <div class="chart-tip" id="risk-tip"></div>
+            </div>
+            <div class="chart-legend" id="risk-legend" hidden></div>
+            <div class="empty" id="risk-empty" hidden>No probability history yet — it builds as conjunction messages arrive.</div>
+          </div>
+        </section>
+      </div>
+
+      <div class="stack">
+        <section class="panel k-rise" style="--d: 200ms" id="passes-panel" aria-labelledby="passes-title">
+          <div class="panel__hd">
+            <h2 class="panel__title" id="passes-title">Passes overhead</h2>
+            <span class="panel__meta" id="passes-meta"></span>
+          </div>
+          <div class="panel__bd">
+            <div class="site-setup" id="site-form">
+              <p class="site-setup__lede" id="site-lede">See when this satellite rises above your horizon. Set your ground station to predict passes for the next 48 hours.</p>
+              <button class="btn btn--primary site-setup__geo" type="button" id="site-geo">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
+                Use my location
+              </button>
+              <div class="site-setup__or"><span>or enter coordinates</span></div>
+              <div class="site-fields">
+                <label class="site-field">
+                  <span>Latitude</span>
+                  <input type="text" class="input" id="site-lat" placeholder="40.71"
+                         inputmode="decimal" autocomplete="off" spellcheck="false"
+                         aria-describedby="site-hint">
+                </label>
+                <label class="site-field">
+                  <span>Longitude</span>
+                  <input type="text" class="input" id="site-lon" placeholder="-74.01"
+                         inputmode="decimal" autocomplete="off" spellcheck="false"
+                         aria-describedby="site-hint">
+                </label>
+                <button class="btn" type="button" id="site-set">Save</button>
+              </div>
+              <p class="site-hint" id="site-hint">Degrees. North and east are positive. Saved in this browser only.</p>
+              <div class="obj-note" id="passes-err" role="alert" hidden></div>
+            </div>
+
+            <div class="site-bar" id="site-bar" hidden>
+              <div class="site-bar__txt">
+                <span class="site-bar__label">Ground station</span>
+                <span class="site-bar__val" id="site-val"></span>
+              </div>
+              <button class="btn btn--xs" type="button" id="site-change">Change</button>
+            </div>
+
+            <div id="passes-wrap" hidden>
+              <ul class="pass-list" id="passes-body"></ul>
+            </div>
+            <div class="empty" id="passes-empty" hidden></div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="statusline">
+  <span>Data from CelesTrak and Space-Track · Screened with SGP4 over a 72-hour window</span>
+  <span id="demo-flag" hidden>Includes demo conjunction messages</span>
+  <span id="sl-auto" hidden></span>
+  <span class="spacer"></span>
+  <span>Kessler</span>
+</footer>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dropdown.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/orbit_plot.js"></script>
+<script src="js/groundtrack.js"></script>
+<script src="js/skyview.js"></script>
+<script src="js/object.js"></script>
+<script src="js/earthtex.js"></script>
+<script src="js/simviews.js"></script>
+<script src="js/simulator.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>

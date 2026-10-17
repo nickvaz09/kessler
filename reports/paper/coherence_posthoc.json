@@ -1,0 +1,114 @@
+{
+  "analysis": "P6 post-hoc checks (not pre-registered): the update test in the encounter plane, and robustness of the low-end test",
+  "n_events": 2167,
+  "bootstrap": 2000,
+  "seed": 42,
+  "c_updates_plane": {
+    "pairs": 22311,
+    "events": 2092,
+    "median_d2": 0.0507757478135499,
+    "median_chi2_2": 1.3862943611198906,
+    "share_above_chi2_2_p99": 0.03545336381157277,
+    "ci95": [
+      0.031685360284106,
+      0.039229574094555075
+    ],
+    "registered_share_above_chi2_3_p99": 0.35135135135135137,
+    "median_ratio_registered_to_plane": 59.69316080691052,
+    "median_abs_cos_position_velocity": 0.00011833216058144426,
+    "n_positions": 24484
+  },
+  "a_robustness": {
+    "crossings": 16,
+    "coherent_max": 0.9842437965345374,
+    "missions": [
+      1,
+      2,
+      3,
+      6,
+      7,
+      16,
+      19
+    ],
+    "n_missions": 7,
+    "markov_bound_without_independence": 0.06151523728340859,
+    "training_candidates_passing_test_filters": {
+      "band_-29.9_-12": {
+        "n": 2778,
+        "share_eligible": 0.6677465802735781
+      },
+      "band_-12_-8": {
+        "n": 1694,
+        "share_eligible": 0.48110979929161746
+      },
+      "band_-29.9_-8": {
+        "n": 4472,
+        "share_eligible": 0.5970483005366727
+      }
+    }
+  },
+  "c_regularization": {
+    "none": {
+      "pairs": 22311,
+      "share_above_chi2_2_p99": 0.037828873649769175
+    },
+    "0.9999": {
+      "pairs": 22311,
+      "share_above_chi2_2_p99": 0.03675317108152929
+    },
+    "0.999": {
+      "pairs": 22311,
+      "share_above_chi2_2_p99": 0.03545336381157277
+    },
+    "0.99": {
+      "pairs": 22311,
+      "share_above_chi2_2_p99": 0.033615705257496305
+    },
+    "share_of_correlations_beyond_0.999": 0.002001732843356936
+  },
+  "d_esa_mahalanobis": {
+    "rotated": {
+      "n": 24478,
+      "share_within_1pct": 0.9210311299942806,
+      "median_abs_dlog10": 0.0006156605233703632
+    },
+    "unrotated": {
+      "n": 24478,
+      "share_within_1pct": 0.04024021570389738,
+      "median_abs_dlog10": 0.3611101024883108
+    }
+  },
+  "a_tolerance_matching": {
+    "n_matched": 2144,
+    "primary_any_later_cdm": {
+      "n": 623,
+      "observed": 16,
+      "coherent_max": 0.9842437965345374
+    },
+    "band_-29.9_-12_any_later": {
+      "n": 444,
+      "observed": 7,
+      "coherent_max": 6.356933655351847e-05
+    },
+    "band_-12_-8_any_later": {
+      "n": 179,
+      "observed": 9,
+      "coherent_max": 0.9841802271979838
+    },
+    "band_-8_-6_any_later": {
+      "n": 210,
+      "observed": 36,
+      "coherent_max": 105.76424191593676
+    },
+    "sentinel_-30_any_later": {
+      "n": 1133,
+      "observed": 6,
+      "coherent_max": 3.9960516168126474e-21
+    }
+  },
+  "code": {
+    "commit": "f7099516e0611c74179ef8c2962b61fb433cd789",
+    "dirty": false
+  },
+  "runtime_s": 70.6
+}

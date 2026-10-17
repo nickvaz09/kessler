@@ -1,0 +1,154 @@
+/* ===========================================================================
+   KESSLER - alerts page
+   An inbox for triage: one clear row per elevated/critical close approach.
+   Tokens only; orange/red appear solely as risk signal.
+   ======================================================================== */
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.alerts { max-width: 1440px; }
+
+.alerts-summary { margin-bottom: 16px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 800px) { .alerts-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* --- inbox panel ------------------------------------------------------------ */
+
+.alerts-panel .panel__hd { flex-wrap: wrap; row-gap: 8px; padding-bottom: 12px; }
+.alerts-panel .seg { margin-left: 8px; }
+@media (max-width: 560px) {
+  .alerts-panel .seg { margin-left: 0; order: 3; width: 100%; }
+  .alerts-panel .seg .btn { flex: 1; }
+}
+
+.alert-list { border-top: 1px solid var(--k-border); }
+.alert-skel { display: grid; gap: 10px; padding: 16px 18px; }
+.alert-skel .skeleton { height: 72px; border-radius: 12px; }
+
+/* one alert: severity bar, who, when, how close, how likely, trend, actions */
+.ar {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    minmax(240px, 2.1fr)
+    minmax(150px, 1.15fr)
+    minmax(110px, 0.9fr)
+    minmax(130px, 1fr)
+    minmax(110px, 0.9fr)
+    auto;
+  gap: 8px 24px;
+  align-items: center;
+  padding: 16px 18px 16px 22px;
+  border-bottom: 1px solid var(--k-grid);
+  transition: background-color var(--k-fast) var(--k-ease);
+}
+.ar::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 12px; bottom: 12px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--k-elevated);
+}
+.ar--critical::before { background: var(--k-critical); }
+.ar:hover { background: var(--k-hover); }
+.ar:last-child { border-bottom: 0; }
+
+.ar-main { min-width: 0; }
+.ar-top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.ar-id { font-size: 12px; color: var(--k-text-3); }
+.ar-id .code { font-size: 11.5px; }
+.ar-pair {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 8px;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+}
+.ar-obj { color: var(--k-text); overflow-wrap: anywhere; }
+.ar-obj:hover { color: var(--k-accent); }
+.ar-and { color: var(--k-text-3); font-weight: 400; }
+.ar-sub { margin-top: 3px; font-size: 12.5px; color: var(--k-text-3); }
+.ar-sub .code { font-size: 11.5px; }
+
+.ar-cell { min-width: 0; }
+.ar-k { font-size: 12px; color: var(--k-text-3); white-space: nowrap; }
+.ar-v {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ar-v--critical { color: var(--k-critical); }
+.ar-v--elevated { color: var(--k-elevated); }
+.ar-s {
+  font-size: 12.5px;
+  color: var(--k-text-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.ar-s.is-up { color: var(--k-text); font-weight: 550; }
+.ar-spark { height: 27px; display: flex; align-items: center; }
+
+.ar-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.ar-actions .btn svg { flex: none; }
+
+/* medium: actions wrap under the data */
+@media (max-width: 1240px) {
+  .ar {
+    grid-template-columns: minmax(220px, 1.8fr) repeat(4, minmax(100px, 1fr));
+  }
+  .ar-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}
+/* phone: a stacked card */
+@media (max-width: 760px) {
+  .ar {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+    padding: 16px 16px 16px 20px;
+  }
+  .ar-main { grid-column: 1 / -1; }
+  .ar-v { font-size: 18px; }
+  .ar-actions { grid-column: 1 / -1; }
+  .ar-actions .btn { flex: 1; }
+}
+
+.alerts-empty { padding: 56px 20px; }
+.alerts-end { padding: 14px 18px; font-size: 13px; color: var(--k-text-3); text-align: center; border-top: 1px solid var(--k-border); }
+
+.load-more {
+  display: block;
+  width: 100%;
+  height: 46px;
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--k-border);
+  border-radius: 0 0 var(--k-radius) var(--k-radius);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 550;
+  color: var(--k-accent);
+  cursor: pointer;
+}
+.load-more:hover { background: var(--k-hover); }
+
+/* --- decaying orbits ----------------------------------------------------------- */
+
+.panel--reentry { margin-top: 16px; }
+.reentry-note { padding: 0 18px 12px; font-size: 13px; color: var(--k-text-3); max-width: 80ch; }
+.tbl--reentry .td-obj { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.tbl--reentry .td-obj a { color: var(--k-text); font-weight: 550; }
+.tbl--reentry .td-obj a:hover { color: var(--k-accent); }
+.tbl--reentry .td-obj .code { margin-left: 6px; font-size: 11.5px; }
+.tbl--reentry .td-link { text-align: right; }
+
+.alerts-summary .stat__sub { white-space: normal; }

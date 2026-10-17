@@ -1,0 +1,46 @@
+  fitted benchmark hurdle (7s)
+  fitted serving hurdle (2s)
+  stage 1: 202752 configs ranked on training out-of-fold at the test mix (33s)
+  stage 2: 26 public submissions
+  stage 3: 60 public submissions in total
+{
+  "config": {
+    "w": 0.5,
+    "tau": 0.3,
+    "band": -7.3,
+    "c": -5.6,
+    "alpha": 0.5,
+    "cap": null,
+    "tau_drop": 0.01,
+    "o_payload": true,
+    "o_tspan": true,
+    "o_miss": false
+  },
+  "public_submissions": 60,
+  "budget": 60,
+  "code": {
+    "commit": "5e4a9e6ad5432e0c35d774d5236f4d2a0cab7935",
+    "dirty": false
+  },
+  "runtime_s": 52.4,
+  "private": {
+    "L": 0.669771740351616,
+    "mse_hr": 0.4794621489301216,
+    "f2": 0.7158590308370044,
+    "lrp_L": 0.7112212740235042,
+    "sesc_cascade_L": 0.6336532721964723,
+    "delta_L_pct_vs_lrp": -5.827937828321817
+  },
+  "full": {
+    "L": 0.6045101843927722,
+    "mse_hr": 0.44321860266945257,
+    "f2": 0.7331863285556781,
+    "lrp_L": 0.6939612611815035,
+    "sesc_cascade_L": 0.5691334136551207,
+    "delta_L_pct_vs_lrp": -12.889923658913816
+  },
+  "train_oof_test_mix_L": 0.3754220885870534,
+  "public_L": 0.5422344133917028,
+  "placement_full": 4
+}
+exit 0

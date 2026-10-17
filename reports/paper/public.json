@@ -1,0 +1,328 @@
+{
+  "analysis": "P7-P8 early warning from public-data counterparts; VIGIL's classifier as a probability forecast (pooled CV)",
+  "repeats": 5,
+  "folds": 5,
+  "bootstrap": 1000,
+  "seed": 42,
+  "n_events": 14109,
+  "n_eligible": 10460,
+  "n_high_risk_eligible": 216,
+  "feature_counts": {
+    "A0": 153,
+    "PUB": 65,
+    "LIVE": 11
+  },
+  "public_features": [
+    "l_time_to_tca",
+    "l_risk",
+    "l_miss_distance",
+    "l_relative_speed",
+    "l_relative_velocity_r",
+    "l_relative_velocity_t",
+    "l_relative_velocity_n",
+    "l_t_cd_area_over_mass",
+    "l_t_j2k_sma",
+    "l_t_j2k_ecc",
+    "l_t_j2k_inc",
+    "l_c_cd_area_over_mass",
+    "l_c_j2k_sma",
+    "l_c_j2k_ecc",
+    "l_c_j2k_inc",
+    "l_t_h_apo",
+    "l_t_h_per",
+    "l_c_h_apo",
+    "l_c_h_per",
+    "l_geocentric_latitude",
+    "l_azimuth",
+    "l_elevation",
+    "l_F10",
+    "l_F3M",
+    "l_SSN",
+    "l_AP",
+    "l_ctype_debris",
+    "h_n_inputs",
+    "h_last_tta",
+    "h_span_days",
+    "h_gap_last",
+    "h_risk_last",
+    "h_risk_first",
+    "h_risk_max",
+    "h_risk_min",
+    "h_risk_mean",
+    "h_risk_std",
+    "h_risk_delta_last",
+    "h_risk_slope",
+    "h_risk_last_is_floor",
+    "h_n_floor",
+    "h_risk_max_minus_last",
+    "h_miss_last",
+    "h_miss_log_ratio",
+    "h_miss_slope",
+    "h_risk_quad_extrap",
+    "h_risk_quad_curv",
+    "h_risk_lin_extrap",
+    "s_miss_distance_m",
+    "s_relative_velocity_ms",
+    "s_pc_latest",
+    "s_time_to_tca_h",
+    "s_cdm_count",
+    "s_md_delta",
+    "s_pc_log_delta",
+    "s_md_slope",
+    "s_pc_log_slope",
+    "s_pc_log_max",
+    "s_msg_gap_last_h",
+    "l_ctype_unknown",
+    "l_ctype_payload",
+    "l_ctype_rocket_body",
+    "l_ctype_tba",
+    "l_t_rcs_estimate_class",
+    "l_c_rcs_estimate_class"
+  ],
+  "p7_early_warning": {
+    "pooled": {
+      "n_candidates": 9974,
+      "n_escalations": 54,
+      "summary": {
+        "A0": {
+          "pr_auc": 0.12606428956217197,
+          "roc_auc": 0.9196841397849462,
+          "recall_at_budget": 0.5185185185185185
+        },
+        "PUB": {
+          "pr_auc": 0.11381423100192593,
+          "roc_auc": 0.9215038829151732,
+          "recall_at_budget": 0.5111111111111111
+        },
+        "LIVE": {
+          "pr_auc": 0.0814866900198061,
+          "roc_auc": 0.8990315113500598,
+          "recall_at_budget": 0.47037037037037044
+        },
+        "e_logit": {
+          "pr_auc": 0.06497789936874059,
+          "roc_auc": 0.8531098790322581,
+          "recall_at_budget": 0.5148148148148147
+        },
+        "calibrated": {
+          "pr_auc": 0.0647758038530559,
+          "roc_auc": 0.8515410319593787,
+          "recall_at_budget": 0.5407407407407406
+        }
+      },
+      "contrasts": {
+        "PUB_minus_logit": {
+          "mean": 0.04883633163318535,
+          "ci95": [
+            0.009312117369857263,
+            0.1137591097653489
+          ],
+          "mde": 0.07693185808564648
+        },
+        "A0_minus_PUB": {
+          "mean": 0.01225005856024602,
+          "ci95": [
+            -0.023738518500499378,
+            0.05042415674342569
+          ],
+          "mde": 0.05411944965864847
+        },
+        "PUB_minus_LIVE": {
+          "mean": 0.03232754098211983,
+          "ci95": [
+            -0.005123703383263932,
+            0.08008786399255342
+          ],
+          "mde": 0.06059767910497498
+        },
+        "A0_minus_logit": {
+          "mean": 0.06108639019343136,
+          "ci95": [
+            0.01621385929627105,
+            0.1322040724794329
+          ],
+          "mde": 0.08579893439468904
+        },
+        "LIVE_minus_logit": {
+          "mean": 0.016508790651065513,
+          "ci95": [
+            -0.01412771001151006,
+            0.06661026556304961
+          ],
+          "mde": 0.057570264558490805
+        }
+      }
+    },
+    "test_events_only": {
+      "n_candidates": 1989,
+      "n_escalations": 35,
+      "summary": {
+        "A0": {
+          "pr_auc": 0.19289769575554674,
+          "roc_auc": 0.9015323877759907,
+          "recall_at_budget": 0.45714285714285713
+        },
+        "PUB": {
+          "pr_auc": 0.1910262436845463,
+          "roc_auc": 0.9096593069162159,
+          "recall_at_budget": 0.44000000000000006
+        },
+        "LIVE": {
+          "pr_auc": 0.17453814880006785,
+          "roc_auc": 0.8879923965492031,
+          "recall_at_budget": 0.41714285714285715
+        },
+        "e_logit": {
+          "pr_auc": 0.14348416290813099,
+          "roc_auc": 0.8168708875566605,
+          "recall_at_budget": 0.42857142857142855
+        },
+        "calibrated": {
+          "pr_auc": 0.1462280680693437,
+          "roc_auc": 0.816882585173271,
+          "recall_at_budget": 0.42857142857142855
+        }
+      },
+      "contrasts": {
+        "PUB_minus_logit": {
+          "mean": 0.04754208077641532,
+          "ci95": [
+            -0.008873524978038873,
+            0.12392698310628522
+          ],
+          "mde": 0.09414094662966067
+        },
+        "A0_minus_PUB": {
+          "mean": 0.0018714520710004568,
+          "ci95": [
+            -0.04377008248058863,
+            0.034440717537910795
+          ],
+          "mde": 0.055789420329667966
+        },
+        "PUB_minus_LIVE": {
+          "mean": 0.016488094884478437,
+          "ci95": [
+            -0.037411656393165245,
+            0.07311315187538155
+          ],
+          "mde": 0.07751325068032568
+        },
+        "A0_minus_logit": {
+          "mean": 0.049413532847415766,
+          "ci95": [
+            -0.005162320980023163,
+            0.11244579706729198
+          ],
+          "mde": 0.08228273697543027
+        },
+        "LIVE_minus_logit": {
+          "mean": 0.031053985891936874,
+          "ci95": [
+            -0.02802431006380406,
+            0.10832100763167742
+          ],
+          "mde": 0.09866547300757204
+        }
+      }
+    },
+    "reading": "supported"
+  },
+  "p8_forecast": {
+    "A0": {
+      "logloss": 0.05031780032241273,
+      "brier": 0.01375007861499494,
+      "d_logloss_vs_calibrated": {
+        "mean": -0.005325793982122726,
+        "ci95": [
+          -0.007717497046226911,
+          -0.002754709978260206
+        ]
+      },
+      "d_brier_vs_calibrated": {
+        "mean": -0.0013733122027115522,
+        "ci95": [
+          -0.002084973514842368,
+          -0.0006240005524108435
+        ]
+      }
+    },
+    "PUB": {
+      "logloss": 0.051822507043594146,
+      "brier": 0.01432689512104538,
+      "d_logloss_vs_calibrated": {
+        "mean": -0.003821087260941311,
+        "ci95": [
+          -0.006216918544781526,
+          -0.0013093231502309885
+        ]
+      },
+      "d_brier_vs_calibrated": {
+        "mean": -0.000796495696661112,
+        "ci95": [
+          -0.0014184221521049468,
+          -0.0001115018815395797
+        ]
+      }
+    },
+    "calibrated": {
+      "logloss": 0.05564359430453546,
+      "brier": 0.015123390817706492
+    },
+    "reading": "better"
+  },
+  "p8_false_alarms": {
+    "n_calls": 486,
+    "n_stay_high_risk": 162,
+    "roc_auc": {
+      "A0": 0.7272557536960829,
+      "PUB": 0.6829865874104557,
+      "calibrated": 0.5810432860844383
+    },
+    "false_alarms_removed_at_95pct": {
+      "A0": {
+        "mean": 0.27901234567901234,
+        "ci95": [
+          0.20059633027522936,
+          0.35480379256965944
+        ]
+      },
+      "PUB": {
+        "mean": 0.20123456790123456,
+        "ci95": [
+          0.13253133401316403,
+          0.288188517140903
+        ]
+      },
+      "calibrated": {
+        "mean": 0.06419753086419752,
+        "ci95": [
+          0.03592777293709794,
+          0.10990264274955494
+        ]
+      }
+    },
+    "d_roc_auc_A0_vs_calibrated": {
+      "mean": 0.14621246761164453,
+      "ci95": [
+        0.08183522836895153,
+        0.20363112828906885
+      ]
+    },
+    "d_roc_auc_PUB_vs_calibrated": {
+      "mean": 0.10194330132601737,
+      "ci95": [
+        0.0386302237441538,
+        0.16473051581325304
+      ]
+    }
+  },
+  "reference": {
+    "P4_A0_pr_auc": 0.12606428956217197
+  },
+  "code": {
+    "commit": "6e8b6e27e583a247e0f223f0269eb9ac281d0fd1",
+    "dirty": false
+  },
+  "runtime_s": 402.3
+}

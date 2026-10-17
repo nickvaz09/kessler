@@ -1,0 +1,16 @@
+# Build-context excludes for deploy/Dockerfile (context = repo root).
+# NOTE: because the build context is the repo root, BuildKit reads
+# deploy/Dockerfile.dockerignore (an identical copy of this file) - keep the
+# two files in sync.
+.venv
+.git
+.pytest_cache
+**/__pycache__
+*.pyc
+data/*.db
+data/*.db-wal
+data/*.db-shm
+data/kelvins
+data/reports
+deploy
+docs

@@ -1,0 +1,28 @@
+# environments / secrets
+.venv/
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# generated data (rebuilt by the pipeline / trainer)
+data/kessler.db*
+data/backups/
+data/kelvins/
+data/models/*
+!data/models/risk_model.json
+!data/models/risk_model.meta.json
+data/reports/
+data/tts/
+data/*.log
+
+# os / editor
+.DS_Store
+media/
+
+# archived Space-Track element sets: fetched locally, not redistributable
+backend/app/scenarios/*.archived.json

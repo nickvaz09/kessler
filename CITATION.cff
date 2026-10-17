@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Kessler: collision-risk monitoring for small satellites"
+authors:
+  - family-names: Vazquez
+    given-names: Nicolas
+repository-code: "https://github.com/nickvaz09/kessler"
+license: MIT
+keywords:
+  - space debris
+  - collision avoidance
+  - conjunction assessment
+  - machine learning
+  - pre-registration
+abstract: >-
+  Kessler screens the public satellite catalog for close approaches with SGP4,
+  forecasts collision risk with VIGIL, a model trained on ESA's Collision
+  Avoidance Challenge data, and re-evaluates that model in four pre-registered
+  rounds (the VIGIL Lab).

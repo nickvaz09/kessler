@@ -1,0 +1,27 @@
+loaded 11942 training events, 2167 test events
+  repeat 1/5 fold 1/5  26s
+  repeat 1/5 fold 2/5  53s
+  repeat 1/5 fold 3/5  31s
+  repeat 1/5 fold 4/5  27s
+  repeat 1/5 fold 5/5  24s
+  repeat 2/5 fold 1/5  17s
+  repeat 2/5 fold 2/5  18s
+  repeat 2/5 fold 3/5  19s
+  repeat 2/5 fold 4/5  23s
+  repeat 2/5 fold 5/5  17s
+  repeat 3/5 fold 1/5  22s
+  repeat 3/5 fold 2/5  18s
+  repeat 3/5 fold 3/5  20s
+  repeat 3/5 fold 4/5  19s
+  repeat 3/5 fold 5/5  24s
+  repeat 4/5 fold 1/5  29s
+  repeat 4/5 fold 2/5  19s
+  repeat 4/5 fold 3/5  21s
+  repeat 4/5 fold 4/5  28s
+  repeat 4/5 fold 5/5  22s
+  repeat 5/5 fold 1/5  21s
+  repeat 5/5 fold 2/5  26s
+  repeat 5/5 fold 3/5  30s
+  repeat 5/5 fold 4/5  23s
+  repeat 5/5 fold 5/5  24s
+→ reports/paper/ablation.json

@@ -1,0 +1,7 @@
+loaded 11942 training events, 0 test events
+  cutoff 2.00 d: LRP L 0.804, hurdle_lrp L 0.778  (167s)
+  cutoff 1.75 d: LRP L 0.687, hurdle_lrp L 0.670  (101s)
+  cutoff 1.50 d: LRP L 0.492, hurdle_lrp L 0.482  (114s)
+  cutoff 1.25 d: LRP L 0.433, hurdle_lrp L 0.433  (120s)
+  cutoff 1.00 d: LRP L 0.387, hurdle_lrp L 0.387  (125s)
+→ reports/paper/horizon.json

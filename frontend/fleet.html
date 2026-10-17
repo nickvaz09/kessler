@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('kessler.theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+  <meta name="theme-color" content="#000000">
+  <title>Kessler · Fleet</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages/fleet.css">
+  <link rel="stylesheet" href="css/simulator.css">
+  <link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Kessler home"><svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg><span class="brand__word">Kessler</span></a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="/">Overview</a>
+    <a href="/alerts.html">Alerts</a>
+    <a href="/fleet.html" class="active" aria-current="page">Fleet</a>
+    <a href="/replay.html">Time Machine</a>
+    <a href="/model.html">Model</a>
+    <a href="/about.html">About</a>
+  </nav>
+  <div class="topbar__right">
+    <span id="hdr-status"></span>
+    <a class="wall-link" href="/wall.html">Ops wall</a>
+    <span class="live-pill" id="live-pill" role="status"><span class="live-pill__dot"></span><span class="live-pill__text">Connecting…</span></span>
+    <span id="utc-clock"></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle appearance"></button>
+    <a class="cta" href="/start.html"><span class="cta__long">Protect a satellite</span><span aria-hidden="true">＋</span></a>
+  </div>
+</header>
+
+<main class="wrap fleet">
+
+  <div class="page-head">
+    <div>
+      <h1>My fleet</h1>
+      <p>The satellites you fly. Add one from its two-line elements and Kessler screens it against the whole catalog whenever you ask.</p>
+    </div>
+    <button class="btn btn--primary btn--lg" type="button" id="add-open" aria-haspopup="dialog">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Add a satellite
+    </button>
+  </div>
+
+  <div id="error-banner" class="error-banner" role="alert" hidden></div>
+
+  <section class="panel fleet-panel" aria-labelledby="fleet-title">
+    <div class="panel__hd">
+      <h2 class="panel__title" id="fleet-title">Satellites</h2>
+      <span class="panel__meta" id="fleet-meta"></span>
+    </div>
+    <ul class="fleet-list" id="fleet-body">
+      <li class="fleet-skel"><div class="skeleton"></div><div class="skeleton"></div></li>
+    </ul>
+  </section>
+
+  <section class="panel panel--flush fleet-results" id="screen-panel" hidden aria-labelledby="screen-title">
+    <div class="panel__hd">
+      <h2 class="panel__title" id="screen-title">Screening results · <span id="screen-name"></span></h2>
+      <span class="panel__meta" id="screen-meta"></span>
+    </div>
+    <div class="screen-summary" id="screen-summary"></div>
+    <div class="tbl-scroll">
+      <table class="tbl tbl--screen">
+        <thead>
+          <tr>
+            <th>Risk</th>
+            <th>With</th>
+            <th>Closest approach</th>
+            <th class="num">Miss distance</th>
+            <th class="num col-speed">Speed</th>
+            <th class="num" title="Probability of collision (Pc)">Probability</th>
+          </tr>
+        </thead>
+        <tbody id="screen-body"></tbody>
+      </table>
+    </div>
+    <button class="load-more" type="button" id="screen-more" hidden></button>
+    <div class="screen-foot">Screening runs on demand and results aren’t stored. Run it again any time for fresh numbers.</div>
+  </section>
+
+  <section class="panel fleet-results" id="wscan-panel" hidden aria-labelledby="wscan-title">
+    <div class="panel__hd">
+      <h2 class="panel__title" id="wscan-title">Next 14 days · <span id="wscan-name"></span></h2>
+      <span class="panel__meta" id="wscan-meta"></span>
+    </div>
+    <div class="panel__bd">
+      <p class="wscan-lede">Close approaches per day from a quick, coarse scan. Deeper blue means a busier day. Use it to spot quiet windows — it’s a screening aid, not a precise prediction.</p>
+      <div class="wscan-row" id="wscan-row"></div>
+      <div class="wscan-key" aria-hidden="true">
+        <span>Quiet</span><i style="--s: 0"></i><i style="--s: 1"></i><i style="--s: 2"></i><i style="--s: 3"></i><i style="--s: 4"></i><i style="--s: 5"></i><span>Busy</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- add-a-satellite sheet -->
+  <div class="k-scrim" id="add-scrim" hidden></div>
+  <div class="k-sheet add-sheet" id="add-sheet" role="dialog" aria-modal="true" aria-labelledby="add-title" hidden>
+    <div class="add-sheet__hd">
+      <h2 class="title-md" id="add-title">Add a satellite</h2>
+      <button class="icon-btn" type="button" id="add-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <p class="add-sheet__lede">Paste the two-line element set (TLE) for your satellite. You’ll usually find it on CelesTrak, Space-Track, or from your launch provider.</p>
+    <div class="error-banner" id="add-err" role="alert" hidden></div>
+    <form id="add-form" class="add-form" novalidate>
+      <label class="add-field">
+        <span class="add-field__label">Two-line elements</span>
+        <textarea class="input code add-tle" id="add-tle" rows="3" spellcheck="false" autocomplete="off"
+                  placeholder="1 25544U 98067A   26202.51782528  .00016717  00000-0  10270-3 0  9005&#10;2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.49815361 12345"></textarea>
+        <span class="add-field__hint">Line 1 starts with “1 ”, line 2 with “2 ”. A name line above them is fine too.</span>
+      </label>
+      <div class="add-row">
+        <label class="add-field">
+          <span class="add-field__label">Name <span class="faint">optional</span></span>
+          <input type="text" class="input" id="add-name" autocomplete="off" spellcheck="false" placeholder="e.g. Bobcat-1" maxlength="64">
+        </label>
+        <label class="add-field">
+          <span class="add-field__label">Note <span class="faint">optional</span></span>
+          <input type="text" class="input" id="add-note" autocomplete="off" placeholder="e.g. 3U CubeSat, launched May" maxlength="500">
+        </label>
+      </div>
+      <div class="add-actions">
+        <button class="btn btn--lg" type="button" id="add-cancel">Cancel</button>
+        <button class="btn btn--primary btn--lg" type="submit" id="add-btn">Add to fleet</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<footer class="statusline">
+  <span>Data from CelesTrak and Space-Track · Screened with SGP4 over a 72-hour window</span>
+  <span id="demo-flag" hidden>Includes demo conjunction messages</span>
+  <span id="sl-auto" hidden></span>
+  <span class="spacer"></span>
+  <span>Kessler</span>
+</footer>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dropdown.js"></script>
+<script src="js/fleet.js"></script>
+<!-- charts/orbit/track/sim modules: the Kessler AI assistant's trajectory
+     modal and open_simulator action work on every page -->
+<script src="js/charts.js"></script>
+<script src="js/orbit_plot.js"></script>
+<script src="js/groundtrack.js"></script>
+<script src="js/earthtex.js"></script>
+<script src="js/simviews.js"></script>
+<script src="js/simulator.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>

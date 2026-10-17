@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- the ops wall is a big-screen display: always dark, whatever the saved appearance -->
+  <script>document.documentElement.setAttribute('data-theme','dark');</script>
+  <meta name="theme-color" content="#000000">
+  <title>Kessler · Wall</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages/wall.css">
+</head>
+<body class="wall-body">
+
+<main class="wall" aria-label="Kessler operations wall">
+  <section class="wall-globe" id="wall-globe-wrap" aria-label="Earth with every tracked object">
+    <canvas id="globe"></canvas>
+    <div class="globe-tip" id="globe-tip"></div>
+
+    <div class="wall-brand">
+      <svg class="brand-mark" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg>
+      <span>Kessler</span>
+    </div>
+
+    <div class="wall-legend" id="wall-legend" aria-label="Legend">
+      <span class="key key--payload">Payload</span>
+      <span class="key key--debris">Debris</span>
+      <span class="key key--rb">Rocket body</span>
+      <span class="key key--elevated">Elevated risk</span>
+      <span class="key key--critical">Critical risk</span>
+    </div>
+  </section>
+
+  <aside class="wall-side">
+    <div class="wall-top">
+      <div class="wall-time">
+        <div class="wall-clock" id="wall-clock">—</div>
+        <div class="wall-date" id="wall-date">—</div>
+      </div>
+      <a class="wall-dash" href="/">Open dashboard</a>
+    </div>
+
+    <div class="wall-stats" aria-label="Close approaches right now">
+      <div class="wall-stat">
+        <div class="wall-stat__value" id="wall-active">—</div>
+        <div class="wall-stat__label">Active events</div>
+      </div>
+      <div class="wall-stat">
+        <div class="wall-stat__value" id="wall-elevated">—</div>
+        <div class="wall-stat__label">Elevated</div>
+      </div>
+      <div class="wall-stat">
+        <div class="wall-stat__value" id="wall-critical">—</div>
+        <div class="wall-stat__label">Critical</div>
+      </div>
+    </div>
+
+    <!-- space weather (js/wall.js, from /status): the storm in one line -->
+    <a class="wall-sw" id="wall-sw" href="/?view=spaceweather" hidden></a>
+
+    <section class="wall-card wall-focus" aria-label="Now showing on the globe" aria-live="polite">
+      <div class="wall-card__hd">
+        <span class="wall-card__title">Now on the globe</span>
+        <span class="wall-card__meta" id="focus-meta"></span>
+      </div>
+      <div id="focus-body">
+        <div class="wall-empty">Waiting for conjunction data…</div>
+      </div>
+    </section>
+
+    <section class="wall-card wall-top-events" aria-label="Top events">
+      <div class="wall-card__hd">
+        <span class="wall-card__title">Highest risk</span>
+        <span class="wall-card__meta">Next 72 hours</span>
+      </div>
+      <ol class="wall-list" id="wall-top-list"></ol>
+    </section>
+
+    <section class="wall-card wall-changes" id="wall-changes-panel" hidden aria-label="What changed">
+      <div class="wall-card__hd">
+        <span class="wall-card__title">What changed</span>
+        <span class="wall-card__meta" id="wall-changes-meta"></span>
+      </div>
+      <div id="wall-changes-body"></div>
+    </section>
+
+    <div class="wall-foot" id="wall-foot">Connecting…</div>
+  </aside>
+</main>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/earthtex.js"></script>
+<script src="js/globe.js"></script>
+<script src="js/wall.js"></script>
+</body>
+</html>

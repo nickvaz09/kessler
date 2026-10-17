@@ -1,0 +1,39 @@
+loaded 11942 train events, 2167 test events with targets
+pooling the official test events into CV — no sealed test this run
+CV: 14109 events (11059 trainable, 10460 test-eligible with 216 high-risk; 9974 eligible escalation candidates with 54 escalations); 5x5 folds, 28505 augmentation rows
+  repeat 1/5 fold 1/5  123s
+  repeat 1/5 fold 2/5  129s
+  repeat 1/5 fold 3/5  136s
+  repeat 1/5 fold 4/5  59s
+  repeat 1/5 fold 5/5  68s
+  repeat 2/5 fold 1/5  90s
+  repeat 2/5 fold 2/5  90s
+  repeat 2/5 fold 3/5  75s
+  repeat 2/5 fold 4/5  93s
+  repeat 2/5 fold 5/5  90s
+  repeat 3/5 fold 1/5  100s
+  repeat 3/5 fold 2/5  78s
+  repeat 3/5 fold 3/5  87s
+  repeat 3/5 fold 4/5  79s
+  repeat 3/5 fold 5/5  114s
+  repeat 4/5 fold 1/5  88s
+  repeat 4/5 fold 2/5  75s
+  repeat 4/5 fold 3/5  69s
+  repeat 4/5 fold 4/5  64s
+  repeat 4/5 fold 5/5  76s
+  repeat 5/5 fold 1/5  87s
+  repeat 5/5 fold 2/5  89s
+  repeat 5/5 fold 3/5  83s
+  repeat 5/5 fold 4/5  81s
+  repeat 5/5 fold 5/5  84s
+/Users/nicolasvazquez/Desktop/Kessler/backend/app/models/lab/protocol.py:234: RuntimeWarning: Mean of empty slice
+  point_dl = {k: float(np.nanmean([rel(per_rep[k][r]["L"], per_rep["lrp"][r]["L"])
+/Users/nicolasvazquez/Desktop/Kessler/.venv/lib/python3.13/site-packages/numpy/lib/_nanfunctions_impl.py:1845: RuntimeWarning: invalid value encountered in subtract
+  np.subtract(arr, avg, out=arr, casting='unsafe', where=where)
+/Users/nicolasvazquez/Desktop/Kessler/.venv/lib/python3.13/site-packages/numpy/lib/_nanfunctions_impl.py:1997: RuntimeWarning: Degrees of freedom <= 0 for slice.
+  var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/Users/nicolasvazquez/Desktop/Kessler/backend/app/models/lab/protocol.py:201: RuntimeWarning: Mean of empty slice
+  return {"mean": float(np.nanmean(vals)), "sd": float(np.nanstd(vals))}
+
+report → reports/vigil-lab-r2-pooled/lab_report.md
+exit 0

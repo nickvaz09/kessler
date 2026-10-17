@@ -1,0 +1,105 @@
+{
+  "analysis": "P6 coherence of the CDM risk (official test events, no model)",
+  "n_events": 2167,
+  "n_matched_raw": 2142,
+  "selection": {
+    "s_high_risk": 0.6944444444444444,
+    "s_other": 0.19689574385005856,
+    "rho": 3.52696523990525
+  },
+  "bootstrap": 2000,
+  "seed": 42,
+  "a_low_end": {
+    "primary_any_later_cdm": {
+      "n": 623,
+      "observed": 16,
+      "coherent_max": 0.9842437965345374,
+      "ratio": 16.25613497015173,
+      "p_chernoff": 1.3963147240595357e-13
+    },
+    "final_cdm_only": {
+      "n": 623,
+      "observed": 9,
+      "coherent_max": 0.9842437965345374,
+      "ratio": 9.14407592071035,
+      "p_chernoff": 6.7754832876950615e-06
+    },
+    "band_-29.9_-12_any_later": {
+      "n": 444,
+      "observed": 7,
+      "coherent_max": 6.356933655351847e-05,
+      "ratio": 110115.98326351513,
+      "p_chernoff": 5.585746701672505e-33
+    },
+    "band_-12_-8_any_later": {
+      "n": 179,
+      "observed": 9,
+      "coherent_max": 0.9841802271979838,
+      "ratio": 9.144666547125727,
+      "p_chernoff": 6.771976309230681e-06
+    },
+    "band_-8_-6_any_later": {
+      "n": 210,
+      "observed": 36,
+      "coherent_max": 105.76424191593676,
+      "ratio": 0.3403796911683385,
+      "p_chernoff": 1.0
+    },
+    "sentinel_-30_any_later": {
+      "n": 1131,
+      "observed": 6,
+      "coherent_max": 3.9889976863328374e-21,
+      "ratio": 1.5041372474487234e+21,
+      "p_chernoff": 3.4837108055639593e-125
+    },
+    "reading": "incoherent"
+  },
+  "b_high_end": {
+    "final": {
+      "n": 155,
+      "ratio": 1.1336183176347225,
+      "ci95": [
+        0.4497562977043071,
+        2.2937342973745203
+      ],
+      "share_still_high_risk_weighted": 0.30983186415464503
+    },
+    "next_cdm": {
+      "n": 155,
+      "ratio": 0.9207669981278269,
+      "ci95": [
+        0.7295123008341384,
+        1.0847326415149128
+      ]
+    },
+    "reading": "not shown"
+  },
+  "c_updates": {
+    "pairs": 22311,
+    "events": 2092,
+    "median_d2": 2.9399200823842864,
+    "share_above_chi2_3_p99": 0.35135135135135137,
+    "ci95": [
+      0.3370287601607721,
+      0.36571243903297784
+    ],
+    "reading": "unrealistic"
+  },
+  "d_recompute_check": {
+    "unrotated": {
+      "n": 15668,
+      "median_abs_dlog10": 0.41355059907307457,
+      "share_within_0.1": 0.2882307888690324
+    },
+    "rotated": {
+      "n": 15668,
+      "median_abs_dlog10": 0.07452553672254902,
+      "share_within_0.1": 0.5389966811335205
+    }
+  },
+  "code": {
+    "commit": "6e8b6e27e583a247e0f223f0269eb9ac281d0fd1",
+    "dirty": false
+  },
+  "runtime_s": 33.5
+}

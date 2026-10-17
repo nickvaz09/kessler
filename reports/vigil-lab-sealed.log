@@ -1,0 +1,57 @@
+/Users/nicolasvazquez/Desktop/Kessler/backend/app/models/lab/protocol.py:207: RuntimeWarning: Mean of empty slice
+  point_dl = {k: float(np.nanmean([rel(per_rep[k][r]["L"], per_rep["lrp"][r]["L"])
+/Users/nicolasvazquez/Desktop/Kessler/.venv/lib/python3.13/site-packages/numpy/lib/_nanfunctions_impl.py:1845: RuntimeWarning: invalid value encountered in subtract
+  np.subtract(arr, avg, out=arr, casting='unsafe', where=where)
+/Users/nicolasvazquez/Desktop/Kessler/.venv/lib/python3.13/site-packages/numpy/lib/_nanfunctions_impl.py:1997: RuntimeWarning: Degrees of freedom <= 0 for slice.
+  var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+/Users/nicolasvazquez/Desktop/Kessler/backend/app/models/lab/protocol.py:207: RuntimeWarning: Mean of empty slice
+  point_dl = {k: float(np.nanmean([rel(per_rep[k][r]["L"], per_rep["lrp"][r]["L"])
+/Users/nicolasvazquez/Desktop/Kessler/.venv/lib/python3.13/site-packages/numpy/lib/_nanfunctions_impl.py:1845: RuntimeWarning: invalid value encountered in subtract
+  np.subtract(arr, avg, out=arr, casting='unsafe', where=where)
+/Users/nicolasvazquez/Desktop/Kessler/.venv/lib/python3.13/site-packages/numpy/lib/_nanfunctions_impl.py:1997: RuntimeWarning: Degrees of freedom <= 0 for slice.
+  var = nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+loaded 11942 train events, 2167 test events with targets
+CV: 11942 events (8892 trainable, 8293 test-eligible with 66 high-risk; 7985 eligible escalation candidates with 19 escalations); 5x5 folds, 22809 augmentation rows
+  repeat 1/5 fold 1/5  58s
+  repeat 1/5 fold 2/5  64s
+  repeat 1/5 fold 3/5  93s
+  repeat 1/5 fold 4/5  68s
+  repeat 1/5 fold 5/5  45s
+  repeat 2/5 fold 1/5  48s
+  repeat 2/5 fold 2/5  57s
+  repeat 2/5 fold 3/5  55s
+  repeat 2/5 fold 4/5  50s
+  repeat 2/5 fold 5/5  57s
+  repeat 3/5 fold 1/5  74s
+  repeat 3/5 fold 2/5  75s
+  repeat 3/5 fold 3/5  79s
+  repeat 3/5 fold 4/5  61s
+  repeat 3/5 fold 5/5  66s
+  repeat 4/5 fold 1/5  71s
+  repeat 4/5 fold 2/5  59s
+  repeat 4/5 fold 3/5  86s
+  repeat 4/5 fold 4/5  64s
+  repeat 4/5 fold 5/5  98s
+  repeat 5/5 fold 1/5  81s
+  repeat 5/5 fold 2/5  65s
+  repeat 5/5 fold 3/5  152s
+  repeat 5/5 fold 4/5  68s
+  repeat 5/5 fold 5/5  105s
+      lrp                    0.0s
+      sesc                   0.6s
+      gbm_resid              2.5s
+      gbm_resid_hr           3.7s
+      gbm_resid_aug         10.4s
+      gbm_quant             59.2s
+      ridge_phys             0.0s
+      hurdle                 7.2s
+      hurdle_lrp             7.3s
+      hurdle_lrp_serving     2.9s
+      serving_resid          0.5s
+  ceiling[admissible]: L=0.772 (lrp 0.804)
+  ceiling[with_late_cdms]: L=0.398 (lrp 0.387)
+
+report → reports/vigil-lab-sealed/lab_report.md
+VIGIL serving model did not pass its gate — nothing exported
+VIGIL-E serving model did not pass its gate — nothing exported
+exit 0

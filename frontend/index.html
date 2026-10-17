@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>(function(){try{var t=localStorage.getItem('kessler.theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}})();</script>
+  <meta name="theme-color" content="#000000">
+  <title>Kessler · Overview</title>
+  <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g fill="none"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="%239aa8b8" stroke-width="1.4"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="%235c6875" stroke-width="1.4"/></g><circle cx="12" cy="12" r="1.3" fill="%239aa8b8"/><circle cx="19.2" cy="13.8" r="0.95" fill="%23dbe2ea"/></svg>'>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/pages/dashboard.css">
+  <link rel="stylesheet" href="css/simulator.css">
+  <link rel="stylesheet" href="css/assistant.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="Kessler home"><svg class="brand-mark" viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><g fill="none" stroke-width="1.2"><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(30 12 12)" stroke="var(--k-mark-ring)"/><ellipse cx="12" cy="12" rx="9" ry="3.4" transform="rotate(-30 12 12)" stroke="var(--k-mark-ring-2)"/></g><circle cx="12" cy="12" r="1.3" fill="var(--k-mark-ring)"/><circle cx="19.2" cy="13.8" r="0.95" fill="var(--k-mark-sat)"/></svg><span class="brand__word">Kessler</span></a>
+  <nav class="topnav" aria-label="Primary">
+    <a href="/" class="active" aria-current="page">Overview</a>
+    <a href="/alerts.html">Alerts</a>
+    <a href="/fleet.html">Fleet</a>
+    <a href="/replay.html">Time Machine</a>
+    <a href="/model.html">Model</a>
+    <a href="/about.html">About</a>
+  </nav>
+  <div class="topbar__right">
+    <span id="hdr-status"></span>
+    <a class="wall-link" href="/wall.html">Ops wall</a>
+    <span class="live-pill" id="live-pill" role="status"><span class="live-pill__dot"></span><span class="live-pill__text">Connecting…</span></span>
+    <span id="utc-clock"></span>
+    <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle appearance"></button>
+    <a class="cta" href="/start.html"><span class="cta__long">Protect a satellite</span><span aria-hidden="true">＋</span></a>
+  </div>
+</header>
+
+<!-- Hero: the globe is the product. A full-bleed dark "space" stage with
+     frosted-glass UI floating over it (summary, sheet, control dock). Below
+     900 px the overlays drop out of the stage into ordinary stacked cards. -->
+<section class="stage" id="stage" aria-label="Earth and everything we track around it">
+  <div class="stage__view" id="globe-wrap">
+    <canvas class="stage__stars" id="globe-stars" aria-hidden="true"></canvas>
+    <canvas id="globe" aria-label="Interactive globe of tracked objects. Drag to rotate, hold Ctrl or ⌘ and scroll (or pinch) to zoom, select a dot to inspect it."></canvas>
+    <!-- the Space weather lens: the same stage seen from the Sun (js/sunview.js) -->
+    <canvas class="stage__sun" id="sun-canvas" role="img" hidden
+            aria-label="The Sun, the solar wind and Earth's magnetic shield, driven by live NOAA data"></canvas>
+    <div class="globe-tip" id="globe-tip" role="status"></div>
+    <div class="stage__caption">
+      <div class="globe-legend" id="globe-legend" aria-label="What the dots mean">
+        <span class="key key--payload">Payload</span>
+        <span class="key key--debris">Debris</span>
+        <span class="key key--rb">Rocket body</span>
+        <span class="key key--elevated">Elevated</span>
+        <span class="key key--critical">Critical</span>
+      </div>
+      <div class="globe-count" id="globe-count"></div>
+    </div>
+    <div class="stage__hint" id="stage-hint" aria-hidden="true">Hold Ctrl or ⌘ and scroll to zoom</div>
+  </div>
+
+  <!-- encounter mode (?conj=, drawer "Show on globe", Changes rows): which
+       pair is shown, a Simulate action, and an honest note when the newest
+       orbits don't put the markers together -->
+  <div class="enc-bar-slot">
+    <div class="enc-bar glass" id="enc-bar" role="region" aria-label="Close approach shown on the globe" hidden>
+      <div class="enc-bar__main">
+        <div class="enc-bar__text">
+          <div class="enc-bar__pair" id="enc-pair"></div>
+          <div class="enc-bar__sub" id="enc-sub"></div>
+        </div>
+        <div class="enc-bar__acts">
+          <button type="button" class="btn btn--primary btn--xs" id="enc-sim">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.2-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>
+            Simulate
+          </button>
+          <button type="button" class="enc-bar__close" id="enc-close" aria-label="Stop showing this close approach" title="Close">
+            <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+      <p class="enc-bar__note" id="enc-note" hidden></p>
+    </div>
+  </div>
+
+  <div class="stage__left">
+    <div id="error-banner" class="error-banner glass" role="alert" hidden></div>
+
+    <section class="hero-card glass k-rise" style="--d:80ms" aria-labelledby="hero-window">
+      <div class="hero-card__eyebrow" id="hero-window">Next 72 hours</div>
+      <div class="hero-risks">
+        <button class="hero-risk hero-risk--elevated is-lead" type="button" id="stat-tile-elevated" disabled
+                aria-label="Show elevated close approaches in the table"
+                title="Chance of collision of 1 in a million or higher (Pc ≥ 1e-6)">
+          <span class="hero-risk__value" id="stat-elevated">—</span>
+          <span class="hero-risk__label" data-one="elevated close approach" data-many="elevated close approaches">elevated close approaches</span>
+          <span class="hero-risk__sub">Chance of collision 1 in a million or higher</span>
+        </button>
+        <button class="hero-risk hero-risk--critical" type="button" id="stat-tile-critical" disabled
+                aria-label="Show critical close approaches in the table"
+                title="Chance of collision of 1 in 10,000 or higher (Pc ≥ 1e-4)">
+          <span class="hero-risk__value" id="stat-critical">—</span>
+          <span class="hero-risk__label" data-one="critical close approach" data-many="critical close approaches">critical</span>
+          <span class="hero-risk__sub">Chance of collision 1 in 10,000 or higher</span>
+        </button>
+      </div>
+      <dl class="hero-facts">
+        <div class="hero-fact">
+          <dt>Tracked objects</dt>
+          <dd id="stat-catalog">—</dd>
+        </div>
+        <div class="hero-fact">
+          <dt id="stat-active-label">Pairs screened</dt>
+          <dd id="stat-active">—</dd>
+        </div>
+        <div class="hero-fact">
+          <dt>Updated</dt>
+          <dd><span id="stat-ingest">—</span><span class="hero-fact__sub" id="stat-ingest-sub"></span></dd>
+        </div>
+        <div class="hero-fact">
+          <dt>Risk model</dt>
+          <dd id="stat-model">—</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- Space weather lens: what the stage is showing, in words -->
+    <section class="sun-cap glass" id="sun-cap" aria-labelledby="sun-cap-title" hidden>
+      <div class="hero-card__eyebrow" id="sun-cap-eyebrow">Space weather · live</div>
+      <h2 class="sun-cap__title" id="sun-cap-title" aria-live="polite">—</h2>
+      <p class="sun-cap__text" id="sun-cap-text" aria-live="polite"></p>
+      <dl class="sun-cap__facts" id="sun-cap-facts"></dl>
+    </section>
+  </div>
+
+  <!-- one stage, two lenses: every tracked object, or the Sun's effect on them -->
+  <div class="stage__lens glass k-rise" style="--d:120ms">
+    <span class="seg lens-group" id="lens-group" role="group" aria-label="View">
+      <button class="btn is-active" type="button" data-lens="orbits" aria-pressed="true" title="Every tracked object around Earth">Orbits</button>
+      <button class="btn" type="button" data-lens="weather" aria-pressed="false" title="The Sun, the solar wind and Earth's magnetic shield, live">Space weather</button>
+    </span>
+  </div>
+
+  <!-- right: selected object, changes, watch log - one glass sheet that
+       scrolls internally; each section collapses -->
+  <aside class="stage__side glass k-rise" style="--d:140ms" id="stage-side" aria-label="Details">
+    <section class="sheet-sec" id="sel-panel">
+      <div class="sheet-sec__hd">
+        <button class="sheet-sec__toggle" type="button" aria-expanded="true" aria-controls="sel-body">
+          <span class="sheet-sec__title">Selected object</span>
+          <svg class="sheet-sec__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="sheet-sec__close" type="button" id="sel-clear" hidden aria-label="Clear selection" title="Clear selection">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+      <div class="sheet-sec__bd" id="sel-body">
+        <div class="sel-empty">
+          <p>Select any object to see its orbit and close approaches.</p>
+          <p class="sel-empty__hint">Drag to rotate · hold Ctrl or ⌘ and scroll to zoom</p>
+        </div>
+      </div>
+    </section>
+    <!-- space weather (js/spaceweather.js): live NOAA conditions and what
+         they do to orbits - hidden until /spaceweather answers -->
+    <section class="sheet-sec sw-sec" id="sw-panel" hidden>
+      <div class="sheet-sec__hd">
+        <button class="sheet-sec__toggle" type="button" aria-expanded="true" aria-controls="sw-body">
+          <span class="sheet-sec__title">Space weather</span>
+          <span class="sheet-sec__meta" id="sw-meta"></span>
+          <svg class="sheet-sec__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="sheet-sec__bd" id="sw-body">
+        <div class="sw-head">
+          <span class="sw-level" id="sw-level">—</span>
+          <span class="sw-kp" id="sw-kp"></span>
+        </div>
+        <p class="sw-lede" id="sw-lede"></p>
+        <dl class="sw-facts" id="sw-facts"></dl>
+        <div class="sw-kpchart" id="sw-kpchart" role="img" aria-label="Geomagnetic activity (Kp): the last two days and NOAA's three-day forecast"></div>
+        <div class="sw-poles" aria-label="Aurora now, NOAA OVATION">
+          <figure><canvas id="sw-north" aria-hidden="true"></canvas><figcaption>North</figcaption></figure>
+          <figure><canvas id="sw-south" aria-hidden="true"></canvas><figcaption>South</figcaption></figure>
+        </div>
+        <div class="sw-widened" id="sw-widened" hidden></div>
+        <button class="btn btn--xs sw-open" type="button" id="sw-open">See it from the Sun</button>
+        <p class="sw-src" id="sw-src"></p>
+      </div>
+    </section>
+    <!-- run-over-run diff from /changes - hidden until the endpoint
+         answers (pre-restart backends 404 it) -->
+    <section class="sheet-sec" id="changes-panel" hidden>
+      <div class="sheet-sec__hd">
+        <button class="sheet-sec__toggle" type="button" aria-expanded="true" aria-controls="changes-body">
+          <span class="sheet-sec__title">Changes</span>
+          <span class="sheet-sec__meta" id="changes-meta"></span>
+          <svg class="sheet-sec__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="sheet-sec__bd" id="changes-body"></div>
+    </section>
+    <!-- AI change-of-watch entries from /watchlog - hidden until the
+         endpoint answers (pre-restart backends 404 it) -->
+    <section class="sheet-sec is-collapsed" id="watchlog-panel" hidden>
+      <div class="sheet-sec__hd">
+        <button class="sheet-sec__toggle" type="button" aria-expanded="false" aria-controls="watchlog-body">
+          <span class="sheet-sec__title">Watch log</span>
+          <span class="sheet-sec__meta">Notes from the AI on shift</span>
+          <svg class="sheet-sec__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+      <div class="sheet-sec__bd" id="watchlog-body"></div>
+    </section>
+  </aside>
+
+  <!-- bottom: the control dock - view controls on top, time on the bottom -->
+  <div class="stage__dock glass k-rise" style="--d:200ms" id="stage-dock">
+    <div class="dock-row dock-row--view globe-filters" id="globe-filters">
+      <div class="globe-search">
+        <svg class="globe-search__icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <input type="search" class="input" id="globe-search" placeholder="Find a satellite"
+               autocomplete="off" spellcheck="false" aria-label="Find a tracked object by name or NORAD ID"
+               aria-controls="globe-typeahead" aria-autocomplete="list">
+        <div class="typeahead" id="globe-typeahead" role="listbox" hidden></div>
+      </div>
+      <span class="seg globe-type-group" id="globe-type-group" role="group" aria-label="Show object types">
+        <button class="btn is-active" type="button" data-type="PAYLOAD" aria-pressed="true">Payloads</button>
+        <button class="btn is-active" type="button" data-type="DEBRIS" aria-pressed="true">Debris</button>
+        <button class="btn is-active" type="button" data-type="RB" aria-pressed="true" title="Spent upper stages">Rocket bodies</button>
+        <button class="btn is-active" type="button" data-type="UNKNOWN" aria-pressed="true">Unknown</button>
+      </span>
+      <button class="btn dock-toggle" type="button" id="globe-risk-only" aria-pressed="false"
+              title="Show only objects with an elevated or critical close approach">At risk only</button>
+      <span class="dock-sep" aria-hidden="true"></span>
+      <span class="seg globe-mode-group" id="globe-mode-group" role="group" aria-label="Color dots by">
+        <button class="btn is-active" type="button" data-mode="type" aria-pressed="true" title="Color by object type, with risk on top">Type</button>
+        <button class="btn" type="button" data-mode="risk" aria-pressed="false" title="Dim everything except objects at risk">Risk</button>
+        <button class="btn" type="button" data-mode="constellation" aria-pressed="false" title="Color by constellation">Fleet</button>
+        <button class="btn" type="button" data-mode="altitude" aria-pressed="false" title="Color by perigee altitude">Altitude</button>
+        <button class="btn" type="button" data-mode="storm" aria-pressed="false" hidden
+                title="Color low orbits by how much denser the current storm makes their air">Storm</button>
+      </span>
+      <button class="btn dock-toggle" type="button" id="globe-heat" aria-pressed="false"
+              title="Shade the globe by how crowded each region is">Density</button>
+      <button class="btn dock-toggle is-active" type="button" id="globe-surface" aria-pressed="true"
+              title="Show satellite imagery of Earth (off: outline map)">Imagery</button>
+    </div>
+    <div class="dock-row dock-row--time">
+      <div class="dock-clock" id="globe-sim" aria-live="off">—</div>
+      <div class="time-scrub" id="time-scrub">
+        <div class="time-scrub__track" id="scrub-track" tabindex="0" role="slider"
+             aria-valuemin="-24" aria-valuemax="24" aria-valuenow="0" aria-valuetext="Now"
+             aria-label="Simulation time, up to 24 hours before or after now"
+             title="Drag to move through time · double-click to return to now">
+          <div class="time-scrub__rail"></div>
+          <div class="time-scrub__now"></div>
+          <div class="time-scrub__fill" id="scrub-fill"></div>
+          <div class="time-scrub__cursor" id="scrub-cursor"></div>
+        </div>
+        <div class="time-scrub__labels" aria-hidden="true">
+          <span>−24 h</span><span>Now</span><span>+24 h</span>
+        </div>
+      </div>
+      <span class="seg speed-group" id="globe-speed" role="group" aria-label="Playback speed">
+        <button class="btn" type="button" data-speed="1" aria-pressed="false" title="Real time">1×</button>
+        <button class="btn is-active" type="button" data-speed="60" aria-pressed="true" title="One minute every second">60×</button>
+        <button class="btn" type="button" data-speed="600" aria-pressed="false" title="Ten minutes every second">600×</button>
+      </span>
+      <button class="btn dock-now" type="button" data-now="1" id="globe-now"
+              title="Jump back to the present, in real time">Now</button>
+      <span class="zoom-group" role="group" aria-label="Zoom">
+        <button class="zoom-btn" type="button" data-zoom="out" aria-label="Zoom out" title="Zoom out">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+        <button class="zoom-btn" type="button" data-zoom="in" aria-label="Zoom in" title="Zoom in">
+          <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 8h9M8 3.5v9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+      </span>
+    </div>
+  </div>
+</section>
+
+<main class="wrap overview">
+  <!-- timeline - always fed the UNFILTERED conjunction items -->
+  <section class="panel k-rise" style="--d:240ms" id="timeline-panel" aria-labelledby="timeline-title">
+    <div class="panel__hd">
+      <h2 class="panel__title" id="timeline-title">Next 72 hours</h2>
+      <span class="panel__meta" id="timeline-meta"></span>
+    </div>
+    <p class="panel__lede">Each dot is an elevated or critical close approach, placed at its moment of closest approach. Select one to replay it.</p>
+    <div class="timeline-box">
+      <canvas id="timeline-canvas"></canvas>
+      <div class="chart-tip" id="timeline-tip"></div>
+    </div>
+  </section>
+
+  <section class="panel panel--flush conj-panel k-rise" style="--d:300ms" aria-labelledby="conj-title">
+    <div class="panel__hd conj-hd">
+      <div class="conj-hd__text">
+        <h2 class="panel__title" id="conj-title">Close approaches</h2>
+        <span class="conj-hd__meta" id="conj-meta">—</span>
+      </div>
+      <div class="conj-tools">
+        <div class="conj-search">
+          <svg class="conj-search__icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 10.5l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          <input type="search" class="input" id="conj-search" placeholder="Filter by name or NORAD ID"
+                 autocomplete="off" spellcheck="false" aria-label="Filter close approaches by object name or NORAD ID">
+        </div>
+        <span class="seg conj-risk-seg" id="conj-risk-seg" role="group" aria-label="Filter by risk level">
+          <button class="btn is-active" type="button" data-risk="" aria-pressed="true">All</button>
+          <button class="btn" type="button" data-risk="critical" aria-pressed="false">Critical</button>
+          <button class="btn" type="button" data-risk="elevated" aria-pressed="false">Elevated</button>
+          <button class="btn" type="button" data-risk="nominal" aria-pressed="false">Nominal</button>
+        </span>
+        <!-- source of truth for the risk filter (KesslerUI + tiles drive it);
+             the segmented control above mirrors it -->
+        <select id="conj-risk" class="conj-risk-native" aria-hidden="true" tabindex="-1" hidden>
+          <option value="">All risk levels</option>
+          <option value="critical">Critical</option>
+          <option value="elevated">Elevated</option>
+          <option value="nominal">Nominal</option>
+        </select>
+        <button class="btn btn--xs conj-export" type="button" id="conj-export" disabled
+                aria-label="Download the rows shown as a CSV file">Export CSV</button>
+      </div>
+    </div>
+    <div class="tbl-scroll" id="conj-table-wrap">
+      <table class="tbl conj-tbl" id="conj-table">
+        <thead id="conj-thead">
+          <tr>
+            <th>Risk</th>
+            <th class="num th-sort" data-sort="pc" tabindex="0" title="Predicted probability of collision (Pc)">Collision chance<span class="sort-ind"></span></th>
+            <th title="How the collision chance has moved across messages">Trend</th>
+            <th class="num th-sort" data-sort="miss" tabindex="0" title="Predicted miss distance at closest approach">Miss distance<span class="sort-ind"></span></th>
+            <th class="num th-sort" data-sort="rel" tabindex="0" title="Relative velocity at closest approach">Speed<span class="sort-ind"></span></th>
+            <th class="th-sort" data-sort="tca" tabindex="0" title="Time of closest approach (TCA), UTC">Closest approach<span class="sort-ind"></span></th>
+            <th class="num" title="Time until closest approach">In</th>
+            <th>Object</th>
+            <th>Passes near</th>
+            <th class="num th-sort" data-sort="cdms" tabindex="0" title="Conjunction data messages (CDMs) received">Messages<span class="sort-ind"></span></th>
+          </tr>
+        </thead>
+        <tbody id="conj-tbody">
+          <tr><td colspan="10" class="empty">Loading close approaches…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="load-more" type="button" id="conj-load-more" hidden
+            aria-label="Show more close approaches">Show more</button>
+  </section>
+</main>
+
+<footer class="statusline">
+  <span>Orbits from CelesTrak and Space-Track · screened with SGP4 over 72 hours</span>
+  <span id="demo-flag" hidden>Includes demo CDM sequences</span>
+  <span id="sl-auto" hidden></span>
+  <span class="spacer"></span>
+  <span>Kessler · AI collision risk for satellites</span>
+</footer>
+
+<script src="js/theme.js"></script>
+<script src="js/format.js"></script>
+<script src="js/api.js"></script>
+<script src="js/dropdown.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/sparkline.js"></script>
+<script src="js/timeline.js"></script>
+<script src="js/earthtex.js"></script>
+<script src="js/globe.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/sunview.js"></script>
+<script src="js/spaceweather.js"></script>
+<script src="js/orbit_plot.js"></script>
+<script src="js/groundtrack.js"></script>
+<script src="js/simviews.js"></script>
+<script src="js/simulator.js"></script>
+<script src="js/assistant.js"></script>
+</body>
+</html>

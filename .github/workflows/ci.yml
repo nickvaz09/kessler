@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m pytest backend/tests -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax-check every frontend module
+        run: |
+          set -e
+          for f in frontend/js/*.js; do node --check "$f"; done
+
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: kessler
+          POSTGRES_PASSWORD: kessler
+          POSTGRES_DB: kessler
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kessler" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      # The full suite is built on per-test isolated SQLite files; pointing it
+      # wholesale at one shared database makes tests collide. The dedicated pg
+      # module covers the adapter (translation/rows/schema) plus a real
+      # end-to-end lifecycle against the service container.
+      - name: Postgres adapter + end-to-end
+        env:
+          KESSLER_TEST_PG_URL: postgresql://kessler:kessler@localhost:5432/kessler
+        run: python -m pytest backend/tests/test_db_pg.py -q

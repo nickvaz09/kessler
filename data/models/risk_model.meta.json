@@ -1,0 +1,15 @@
+{
+  "version": "vigil-0.4",
+  "target": "residual_below_threshold",
+  "trained_at": "2026-08-19T23:17:27Z",
+  "metrics": {
+    "mse_test_all": 17.812304751796628,
+    "mse_test_high_risk": 13.772472074891269,
+    "baseline_mse_all": 22.59008764001637,
+    "baseline_mse_high_risk": 14.872330848032435,
+    "n_events": 12929,
+    "n_train": 10343,
+    "n_test": 2586,
+    "n_test_high_risk": 76
+  }
+}

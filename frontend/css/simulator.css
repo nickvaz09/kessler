@@ -1,0 +1,766 @@
+/* =============================================================================
+   KSim - Encounter Simulator overlay.
+
+   A full-viewport sheet at z=700 (above the trajectory modal at 600; the
+   assistant sheet floats above at 740; its launcher hides while the
+   simulator is open - body.ksim-open, see assistant.css). The dominant view is a dark "space stage"
+   - .ksim-space pins the dark space palette in both themes (simviews.js
+   resolves canvas colors against the canvas element, so the stage canvases
+   read these values) - with frosted glass overlays. Everything around it
+   (header, side column, transport) follows the page theme. DOM built by
+   js/simulator.js; canvases painted by js/simviews.js.
+   ========================================================================== */
+
+.ksim {
+  position: fixed;
+  inset: 0;
+  z-index: 700;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--k-bg);
+  color: var(--k-text);
+  outline: none;
+  animation: ksim-in 280ms var(--k-ease);
+}
+@keyframes ksim-in { from { opacity: 0; transform: scale(0.992); } }
+
+.ksim .chip { text-transform: none; }
+
+.ksim .sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* the space palette - dark in both themes (same values as the dark tokens) */
+.ksim-space {
+  --k-bg: #000000;
+  --k-surface: #111113;
+  --k-surface-2: #1c1c1f;
+  --k-surface-3: #26262a;
+  --k-hover: rgba(255, 255, 255, 0.06);
+  --k-glass: rgba(22, 22, 26, 0.58);
+  --k-glass-strong: rgba(22, 22, 26, 0.8);
+  --k-glass-brd: rgba(255, 255, 255, 0.10);
+  --k-border: rgba(255, 255, 255, 0.08);
+  --k-border-strong: rgba(255, 255, 255, 0.16);
+  --k-grid: rgba(255, 255, 255, 0.07);
+  --k-text: #f5f5f7;
+  --k-text-2: #a1a1a6;
+  --k-text-3: #86868b;
+  --k-text-4: #5c5c61;
+  --k-accent: #2997ff;
+  --k-accent-soft: rgba(41, 151, 255, 0.18);
+  --k-data-1: #2997ff;
+  --k-data-2: #ff7a45;
+  --k-ok: #30d158;
+  --k-elevated: #ff9f0a;
+  --k-critical: #ff453a;
+  color-scheme: dark;
+  color: var(--k-text);
+}
+
+/* --- header ----------------------------------------------------------------- */
+
+.ksim__hd {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 68px;
+  padding: 12px 20px;
+}
+
+.ksim__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--k-surface-3);
+  color: var(--k-text-2);
+  cursor: pointer;
+  transition: background-color var(--k-fast) var(--k-ease), color var(--k-fast) var(--k-ease), transform var(--k-fast) var(--k-ease);
+}
+.ksim__close:hover { color: var(--k-text); background: color-mix(in srgb, var(--k-surface-3) 80%, var(--k-text) 10%); }
+.ksim__close:active { transform: scale(0.94); }
+.ksim__close svg { width: 16px; height: 16px; }
+
+.ksim__title { min-width: 0; flex: 1 1 auto; }
+.ksim__titlerow { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ksim__pair {
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  color: var(--k-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.ksim__and { font-weight: 400; color: var(--k-text-3); margin: 0 7px; }
+.ksim__hdmeta {
+  margin-top: 2px;
+  font-size: 12.5px;
+  color: var(--k-text-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ksim__hdtools { display: flex; gap: 6px; flex: none; }
+.ksim__hdtools .btn[disabled] { opacity: 0.45; cursor: not-allowed; }
+.ksim__hdtools .btn.is-active { background: var(--k-accent-soft); color: var(--k-accent); }
+
+/* --- stage (loading / error / degrade) --------------------------------------- */
+
+.ksim__stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 24px;
+}
+
+.ksim-note {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  font-size: 14px;
+  color: var(--k-text-3);
+  text-align: center;
+}
+.ksim-spinner {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2.5px solid var(--k-surface-3);
+  border-top-color: var(--k-accent);
+  animation: ksim-spin 900ms linear infinite;
+}
+@keyframes ksim-spin { to { transform: rotate(360deg); } }
+
+.ksim-errbox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 440px;
+  text-align: center;
+}
+.ksim-errbox__title { font-size: 17px; font-weight: 650; letter-spacing: -0.015em; }
+.ksim-errbox__msg { font-size: 14px; color: var(--k-text-2); margin-bottom: 8px; }
+
+/* --- main grid ---------------------------------------------------------------- */
+
+.ksim__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 27vw, 420px);
+  gap: 16px;
+  padding: 0 20px 14px;
+  min-height: 0;
+}
+
+.ksim__main.has-notice { grid-template-rows: auto minmax(0, 1fr); }
+
+/* A2: tracking data disagree with the latest message - calm, not an alarm */
+.ksim-notice {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 10px 12px 16px;
+  border-radius: var(--k-radius-md);
+  background: var(--k-surface-2);
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--k-text-2);
+  animation: ksim-pop 320ms var(--k-spring);
+}
+.ksim-notice strong { color: var(--k-text); font-weight: 600; }
+.ksim-notice__icon { flex: none; display: grid; place-items: center; width: 20px; height: 21px; color: var(--k-text-2); }
+.ksim-notice__icon svg { width: 18px; height: 18px; }
+.ksim-notice__txt { flex: 1 1 auto; min-width: 0; text-wrap: pretty; font-variant-numeric: tabular-nums; }
+.ksim-notice__close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: -3px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--k-text-3);
+  cursor: pointer;
+  transition: background-color var(--k-fast) var(--k-ease), color var(--k-fast) var(--k-ease);
+}
+.ksim-notice__close:hover { background: var(--k-hover); color: var(--k-text); }
+.ksim-notice__close svg { width: 14px; height: 14px; }
+
+.ksim__rel {
+  position: relative;
+  min-height: 0;
+  border-radius: var(--k-radius-lg);
+  overflow: hidden;
+  background: var(--k-space);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset, var(--k-shadow);
+}
+.ksim__relcanvas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair; /* wheel = zoom (switches to manual) */
+}
+
+/* glass overlays riding on the stage */
+.ksim-ov {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+.ksim-ov--top { top: 16px; align-items: flex-start; }
+.ksim-ov--bottom { bottom: 16px; align-items: flex-end; }
+.ksim-ov > *, .ksim-ov__stack > * { pointer-events: auto; }
+.ksim-ov__stack { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.ksim-ov__stack--r { align-items: flex-end; }
+
+.ksim-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--k-glass);
+  -webkit-backdrop-filter: var(--k-blur);
+  backdrop-filter: var(--k-blur);
+  border: 1px solid var(--k-glass-brd);
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--k-text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ksim-phase::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--k-text-3);
+  transition: background-color var(--k-med) var(--k-ease), box-shadow var(--k-med) var(--k-ease);
+}
+.ksim-phase.is-tca::before { background: var(--k-accent); box-shadow: 0 0 0 4px var(--k-accent-soft); }
+
+.ksim-badge { gap: 7px; animation: ksim-pop 320ms var(--k-spring); }
+.ksim-badge__k { color: var(--k-text-3); font-weight: 500; }
+.ksim-badge__v { font-weight: 650; }
+.ksim-badge__v--after { color: var(--k-accent); }
+.ksim-badge__arrow { color: var(--k-text-4); margin: 0 3px; }
+@keyframes ksim-pop { from { opacity: 0; transform: translateY(-4px) scale(0.96); } }
+
+.ksim-glass-seg {
+  background: var(--k-glass);
+  -webkit-backdrop-filter: var(--k-blur);
+  backdrop-filter: var(--k-blur);
+  border: 1px solid var(--k-glass-brd);
+  border-radius: 12px;
+  padding: 3px;
+}
+.ksim-glass-seg .btn { height: 28px; padding: 0 12px; font-size: 12.5px; }
+
+.ksim-axiscap {
+  max-width: 260px;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--k-text-3);
+  text-align: right;
+  pointer-events: none;
+}
+
+.ksim-hero {
+  padding: 14px 18px 14px;
+  border-radius: var(--k-radius);
+  background: var(--k-glass);
+  -webkit-backdrop-filter: var(--k-blur);
+  backdrop-filter: var(--k-blur);
+  border: 1px solid var(--k-glass-brd);
+  min-width: 0;
+}
+.ksim-hero__label { font-size: 12.5px; font-weight: 500; color: var(--k-text-3); }
+.ksim-hero__value {
+  font-size: 40px;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  color: var(--k-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ksim-plain {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--k-text-2);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* narration caption - controller-owned DOM line, bottom center of the stage */
+.ksim-caption {
+  flex: 0 1 460px;
+  align-self: flex-end;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: var(--k-glass-strong);
+  -webkit-backdrop-filter: var(--k-blur);
+  backdrop-filter: var(--k-blur);
+  border: 1px solid var(--k-glass-brd);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--k-text);
+  text-align: center;
+  pointer-events: none;
+  animation: k-fade 240ms var(--k-ease);
+}
+
+.ksim-zoom {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 3px 3px 12px;
+  border-radius: 12px;
+  background: var(--k-glass);
+  -webkit-backdrop-filter: var(--k-blur);
+  backdrop-filter: var(--k-blur);
+  border: 1px solid var(--k-glass-brd);
+  white-space: nowrap;
+}
+.ksim-zoom__info { font-size: 12px; color: var(--k-text-2); font-variant-numeric: tabular-nums; }
+.ksim-zoom .btn { height: 28px; background: transparent; color: var(--k-text-2); }
+.ksim-zoom .btn.is-active { background: var(--k-surface-3); color: var(--k-text); }
+
+/* --- side column ------------------------------------------------------------ */
+
+.ksim__side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 2px 4px;
+  margin: 0 -2px;
+}
+.ksim__side > .panel { flex: none; }
+
+.ksim__rngbd { height: 150px; padding: 0 10px 10px 6px; }
+.ksim__rngcanvas { display: block; width: 100%; height: 100%; }
+.ksim__ctxbd { height: 200px; padding: 0 10px 10px; }
+.ksim__ctxcanvas { display: block; width: 100%; height: 100%; }
+
+.ksim .chart-nodata {
+  height: 100%;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--k-text-3);
+}
+
+/* --- avoidance card --------------------------------------------------------- */
+
+.ksim-avoid__bd { padding: 0 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.ksim-avoid__intro { font-size: 13.5px; color: var(--k-text-2); line-height: 1.45; }
+.ksim-avoid__intro--past { padding: 0 18px 18px; }
+.ksim-avoid__plan { width: 100%; }
+
+.ksim-plan { display: flex; flex-direction: column; gap: 10px; }
+.ksim-plan__loading {
+  font-size: 13px;
+  color: var(--k-text-3);
+  padding: 4px 2px;
+}
+.ksim-plan__loading::before {
+  content: '';
+  display: inline-block;
+  vertical-align: -2px;
+  width: 12px;
+  height: 12px;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--k-surface-3);
+  border-top-color: var(--k-accent);
+  animation: ksim-spin 900ms linear infinite;
+}
+.ksim-plan__note {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--k-text-2);
+  background: var(--k-surface-2);
+  border-radius: var(--k-radius-md);
+  padding: 12px 14px;
+}
+.ksim-plan__note strong { color: var(--k-text); font-weight: 600; }
+
+.ksim-plan__card {
+  border-radius: var(--k-radius-md);
+  background: var(--k-surface-2);
+  padding: 16px;
+  animation: ksim-pop 320ms var(--k-spring);
+}
+.ksim-plan__eyebrow { font-size: 12px; font-weight: 600; color: var(--k-accent); }
+.ksim-plan__headline {
+  margin-top: 4px;
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+  line-height: 1.22;
+  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+.ksim-plan__sub { margin-top: 3px; font-size: 13px; color: var(--k-text-2); }
+.ksim-plan__result {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--k-border);
+}
+.ksim-plan__k { font-size: 12px; color: var(--k-text-3); }
+.ksim-plan__v {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.ksim-plan__from { font-size: 13px; color: var(--k-text-3); }
+.ksim-plan__arrow { font-size: 12px; color: var(--k-text-4); }
+.ksim-plan__to { font-size: 17px; font-weight: 650; letter-spacing: -0.015em; color: var(--k-text); }
+.ksim-plan__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 12px; }
+.ksim-plan__fuel { font-size: 12px; color: var(--k-text-3); }
+.ksim-plan__actions { margin-top: 14px; }
+.ksim-plan__actions .btn { width: 100%; height: 38px; }
+
+.ksim-plan__opts { display: flex; flex-direction: column; gap: 2px; }
+.ksim-plan__optshd { font-size: 12px; color: var(--k-text-3); padding: 2px 4px 4px; }
+.ksim-plan__opt {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 14px;
+  align-items: center;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--k-text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  transition: background-color var(--k-fast) var(--k-ease);
+}
+.ksim-plan__opt:hover { background: var(--k-hover); }
+.ksim-plan__opt.is-active { background: var(--k-accent-soft); }
+.ksim-plan__optlead { color: var(--k-text-2); }
+.ksim-plan__optdv { font-weight: 600; }
+.ksim-plan__optmiss { color: var(--k-text-3); min-width: 62px; text-align: right; }
+.ksim-plan__method { font-size: 11.5px; line-height: 1.45; color: var(--k-text-3); }
+
+/* manual what-if (disclosure) */
+.ksim-mnv__hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 36px;
+  padding: 0 2px;
+  border: 0;
+  border-top: 1px solid var(--k-border);
+  background: none;
+  color: var(--k-text-2);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ksim-mnv__hd:hover { color: var(--k-text); }
+.ksim-mnv__caret { display: grid; place-items: center; width: 16px; height: 16px; transition: transform var(--k-fast) var(--k-ease); }
+.ksim-mnv__caret svg { width: 12px; height: 12px; }
+.ksim-mnv__hd.is-open .ksim-mnv__caret { transform: rotate(90deg); }
+
+.ksim-mnv__bd { display: flex; flex-direction: column; gap: 10px; }
+.ksim-mnv__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ksim-mnv__lbl { font-size: 13px; color: var(--k-text-2); white-space: nowrap; }
+.ksim-mnv__stepper { display: flex; align-items: center; gap: 6px; }
+.ksim-mnv__stepper .btn { width: 28px; padding: 0; font-size: 16px; }
+.ksim-mnv__dv {
+  width: 72px;
+  height: 30px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.ksim-mnv__unit { font-size: 12.5px; color: var(--k-text-3); }
+.ksim-mnv__note { font-size: 12px; color: var(--k-text-3); font-variant-numeric: tabular-nums; margin-top: -4px; }
+.ksim-mnv__actions { display: flex; gap: 8px; }
+.ksim-mnv__res { margin-top: 2px; }
+.ksim-mnv__method { font-size: 11.5px; color: var(--k-text-3); line-height: 1.45; }
+
+/* --- details ---------------------------------------------------------------- */
+
+.ksim-readouts { padding: 0 18px 14px; }
+
+.ksim-kv {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 14px;
+}
+.ksim-kv__label {
+  font-size: 13px;
+  color: var(--k-text-2);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--k-grid);
+  white-space: nowrap;
+}
+.ksim-kv__value {
+  font-size: 13.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--k-text);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--k-grid);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ksim-kv > .ksim-kv__label:nth-last-child(2),
+.ksim-kv > .ksim-kv__value:last-child { border-bottom: none; }
+.ksim-kv__value .chip { margin-left: 6px; vertical-align: 1px; }
+
+.ksim-obj { margin-top: 12px; }
+.ksim-obj__name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding-bottom: 2px;
+  min-width: 0;
+}
+.ksim-obj__name > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ksim-obj__dot { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.ksim-obj__dot--p { background: var(--k-data-1); }
+.ksim-obj__dot--s { background: var(--k-data-2); }
+.ksim-obj__id { margin-left: auto; font-weight: 400; color: var(--k-text-3); font-size: 11.5px; }
+
+/* --- transport bar --------------------------------------------------------------- */
+
+.ksim__ft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  /* the assistant launcher hides while the simulator is open */
+  padding: 8px 20px 10px 20px;
+}
+
+.ksim__play {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--k-text);
+  color: var(--k-bg);
+  cursor: pointer;
+  transition: transform var(--k-fast) var(--k-ease), opacity var(--k-fast) var(--k-ease);
+}
+.ksim__play:hover { transform: scale(1.04); }
+.ksim__play:active { transform: scale(0.95); }
+.ksim__play[disabled] { opacity: 0.4; cursor: not-allowed; transform: none; }
+.ksim__play svg { width: 18px; height: 18px; }
+
+.ksim__tval {
+  flex: none;
+  min-width: 58px;
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--k-text);
+}
+
+.ksim__speeds { flex: none; }
+.ksim__speeds .btn { min-width: 40px; padding: 0 8px; font-variant-numeric: tabular-nums; }
+
+.ksim__expmeta { font-size: 12.5px; font-weight: 500; color: var(--k-text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ksim__ft.is-recording .ksim__expmeta::before {
+  content: '';
+  display: inline-block;
+  width: 7px; height: 7px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: var(--k-text);
+  animation: k-pulse 1.4s var(--k-ease) infinite;
+}
+
+/* --- timeline scrubber ------------------------------------------------------------ */
+
+.ksim-timeline {
+  position: relative;
+  flex: 1 1 auto;
+  height: 40px;
+  min-width: 120px;
+  cursor: pointer;
+  touch-action: none;
+  border-radius: 8px;
+}
+
+.ksim-timeline__track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 4px;
+  background: var(--k-surface-3);
+}
+.ksim-timeline__fill {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
+  width: 0;
+  border-radius: 4px;
+  background: var(--k-accent);
+  pointer-events: none;
+}
+.ksim-timeline__cdm {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: 5px 0 0 -2px;
+  border-radius: 50%;
+  background: var(--k-text-3);
+}
+.ksim-timeline__tca {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 2px;
+  height: 12px;
+  margin: -6px 0 0 -1px;
+  border-radius: 1px;
+  background: var(--k-text-2);
+  pointer-events: none;
+}
+.ksim-timeline__tcalbl {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--k-text-3);
+  white-space: nowrap;
+}
+.ksim-timeline__cursor {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+}
+.ksim-timeline__lbl {
+  position: absolute;
+  bottom: -3px;
+  font-size: 11px;
+  color: var(--k-text-3);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+.ksim-timeline__lbl--l { left: 0; }
+.ksim-timeline__lbl--r { right: 0; }
+
+/* --- responsive -------------------------------------------------------------------- */
+
+@media (max-width: 1100px) {
+  .ksim__main {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    overflow-y: auto;
+    padding-bottom: 20px;
+  }
+  .ksim__main.has-notice { grid-template-rows: auto auto auto; }
+  .ksim__rel { height: min(62vh, 620px); min-height: 360px; }
+  .ksim__side { overflow: visible; }
+}
+@media (max-width: 700px) {
+  .ksim__hd { padding: 10px 14px; gap: 10px; min-height: 60px; align-items: flex-start; }
+  .ksim__close { margin-top: 2px; }
+  .ksim__hdtools { margin-top: 3px; }
+  /* B3: both names always visible - wrap to two lines instead of clipping */
+  .ksim__titlerow { flex-wrap: wrap; row-gap: 4px; }
+  .ksim__pair { font-size: 16px; white-space: normal; overflow: visible; }
+  /* wrap between the names, never inside one */
+  .ksim__pair > span:not(.ksim__and) {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+  }
+  .ksim__and { margin: 0 5px; }
+  .ksim__hdmeta { white-space: normal; font-size: 12px; line-height: 1.4; }
+  .ksim-notice { font-size: 13px; padding: 10px 6px 10px 12px; gap: 10px; }
+  .ksim__main { padding: 0 12px 16px; gap: 12px; }
+  .ksim__rel { height: 58vh; min-height: 340px; border-radius: var(--k-radius); }
+  .ksim-ov { left: 10px; right: 10px; }
+  .ksim-ov--top { top: 10px; }
+  .ksim-ov--bottom { bottom: 10px; flex-wrap: wrap; }
+  .ksim-axiscap { display: none; }
+  .ksim-glass-seg .btn { padding: 0 7px; font-size: 11.5px; }
+  .ksim-pill { height: 28px; padding: 0 9px; gap: 6px; font-size: 11.5px; }
+  .ksim-ov--top { gap: 6px; }
+  .ksim-badge { display: none; }
+  .ksim-hero { padding: 10px 14px; }
+  .ksim-hero__value { font-size: 30px; }
+  .ksim-plain { font-size: 12px; white-space: normal; }
+  .ksim-zoom { display: none; }
+  .ksim-caption { order: -1; flex-basis: 100%; font-size: 13px; }
+  .ksim__ft {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    padding: 8px 12px 12px 12px;
+  }
+  .ksim-timeline { order: 5; flex-basis: 100%; }
+  .ksim__expbtn, .ksim__expmeta { display: none; }
+  .ksim__speeds .btn { min-width: 34px; padding: 0 6px; }
+}

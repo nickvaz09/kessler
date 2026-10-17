@@ -1,0 +1,52 @@
+# Kessler - app + Postgres 16.
+#
+#   cd deploy && docker compose up --build
+#
+# The app waits for Postgres to pass its healthcheck, then serves the API and
+# frontend on http://localhost:8000. KESSLER_DATABASE_URL switches the backend
+# from the default SQLite file to Postgres (see backend/app/db.py).
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: kessler
+      POSTGRES_PASSWORD: kessler
+      POSTGRES_DB: kessler
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kessler -d kessler"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    volumes:
+      - kessler-pgdata:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    # credentials (SPACETRACK_*, ANTHROPIC_API_KEY, ELEVENLABS_API_KEY,
+    # KESSLER_* flags) flow from the repo-root .env per DEPLOY.md
+    env_file:
+      - path: ../.env
+        required: false   # a fresh clone starts without credentials
+    environment:
+      KESSLER_DATABASE_URL: postgresql://kessler:kessler@db:5432/kessler
+      # ANTHROPIC_API_KEY: pass through from the host for the AI assistant.
+    ports:
+      - "8000:8000"
+    volumes:
+      - kessler-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/status', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  kessler-data:
+  kessler-pgdata:
