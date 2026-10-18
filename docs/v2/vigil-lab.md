@@ -951,6 +951,50 @@ pre-registered**; the registered results stay as recorded.
 - "Quantities with public counterparts keep most of the probability-forecast
   and false-alarm gains." Not "most of the early-warning gain".
 
+## Review checks (2026-10-18, post hoc)
+
+An outside review of the paper asked for five more checks. All are post hoc, none looks at
+the sealed test again, and every registered result stays as recorded. Computed by
+`review coherence` and `review cv` (`backend/app/models/lab/review.py`; reports
+`reports/paper/review_coherence.json` and `review_cv.json`). The cv run repeats the folds and
+seeds of `public()` and `ew_posthoc()`, and every registered pooled number is reproduced.
+
+- **P6(a) by mission.** The 16 crossings come from 7 of the 16 missions with candidates
+  between -29.9 and -8. A mission's chance of any crossing is at most the sum of its
+  encounters' bounds (a union bound), so at most 0.98 missions are expected to cross;
+  7 did: p <= 4.5e-04, assuming only that missions are independent. The
+  encounter-level p, 1.4e-13, assumes independent encounters.
+- **Maneuvers and dilution.** By the chaser's object type the crossings are 8 debris,
+  7 unknown and 1 payload, so maneuvers by the chaser explain at most one. By ESA's
+  `max_risk_scaling`, 12 sit outside the dilution region (scaling of at least 1: the miss
+  is many sigma wide, so the covariance is too small) and 4 inside it.
+- **Corrected CV intervals.** The registered bootstrap holds each fold's model fixed. The
+  corrected repeated k-fold t-test (Nadeau and Bengio 2003; Bouckaert and Frank 2004) on
+  the 25 fold-level differences gives:
+  - P8 log loss: A0 against the calibrated latest risk -9.6% [-16, -3]%
+    (p 0.005); against an isotonic latest risk -9.8% [-19, -1]% (p 0.035);
+    isotonic and logistic do not differ. PUB against isotonic -7.0% [-16, +2]%
+    (p 0.11): not significant.
+  - Early warning against the latest risk: no PR-area gain is significant (A0 +0.036 [-0.048, +0.120]).
+    ROC gains hold for A0 (+0.059 [+0.003, +0.115], p 0.04), A1 and PUB, and not for
+    A2 (p 0.10) or LIVE.
+- **False alarms, deployable.** With the 95% threshold set inside the training folds (nested
+  3-fold CV), A0 removes 24% of the held-out false alarms and keeps 96% of the true calls;
+  the latest risk, thresholded the same way, removes 10%. A0 minus latest: +13.8 points [+5.1, +22.5]
+  (p 0.003); PUB 18%, +8.5 points [+0.0, +17.0] (p 0.049). The registered 28%
+  set its threshold on the events it scored.
+- **The frame error.** Refitting with the chaser's covariance rotated into the target's frame
+  in the physics features (all 28,209 rows) changes nothing: log loss
+  -0.00004 [-0.00039, +0.00032], false alarms +0.5 points [-3.2, +4.3], PR area -0.011 [-0.034, +0.013].
+- **Class mix.** Pooling the training and test events restores ESA's full population, so P8
+  is already at the operational class mix.
+
+**What may be quoted instead** (false alarms): "With thresholds set inside the training
+folds, VIGIL's classifier removes about a quarter (24%) of the baseline's false alarms
+while keeping 96% of its true calls; the latest risk alone removes 10%." Say pooled CV,
+post hoc. Quantities with public counterparts keep part of the gain, not most of it
+significantly.
+
 ## Results so far (synthetic rehearsal only)
 
 This is a full CLI run on **synthetic** Kelvins-shaped data (5,650 training

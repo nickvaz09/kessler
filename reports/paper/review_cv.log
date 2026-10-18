@@ -1,0 +1,27 @@
+loaded 11942 training events, 2167 test events
+  repeat 1/5 fold 1/5  170s
+  repeat 1/5 fold 2/5  111s
+  repeat 1/5 fold 3/5  88s
+  repeat 1/5 fold 4/5  101s
+  repeat 1/5 fold 5/5  85s
+  repeat 2/5 fold 1/5  87s
+  repeat 2/5 fold 2/5  87s
+  repeat 2/5 fold 3/5  85s
+  repeat 2/5 fold 4/5  92s
+  repeat 2/5 fold 5/5  83s
+  repeat 3/5 fold 1/5  96s
+  repeat 3/5 fold 2/5  100s
+  repeat 3/5 fold 3/5  92s
+  repeat 3/5 fold 4/5  80s
+  repeat 3/5 fold 5/5  78s
+  repeat 4/5 fold 1/5  81s
+  repeat 4/5 fold 2/5  77s
+  repeat 4/5 fold 3/5  79s
+  repeat 4/5 fold 4/5  76s
+  repeat 4/5 fold 5/5  76s
+  repeat 5/5 fold 1/5  71s
+  repeat 5/5 fold 2/5  76s
+  repeat 5/5 fold 3/5  77s
+  repeat 5/5 fold 4/5  70s
+  repeat 5/5 fold 5/5  80s
+→ reports/paper/review_cv.json

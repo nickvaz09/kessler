@@ -1,0 +1,194 @@
+{
+  "analysis": "Post hoc (review): P6's low-end test by mission, chaser object type and ESA's dilution flag (max_risk_scaling < 1: shrinking the covariance raises Pc)",
+  "band": "latest log10 Pc between -29.9 and -8, matched to a raw sequence",
+  "primary": {
+    "n": 623,
+    "observed": 16,
+    "coherent_max": 0.9842437965345374,
+    "ratio": 16.25613497015173,
+    "p_chernoff": 1.3963147240595357e-13,
+    "n_missions": 16,
+    "missions_with_crossing": 7,
+    "coherent_max_missions": 0.9842437965345373,
+    "crossings_per_crossing_mission": [
+      4,
+      4,
+      2,
+      2,
+      2,
+      1,
+      1
+    ],
+    "p_chernoff_missions": 0.00044528928724984156,
+    "reproduces_registered": true
+  },
+  "by_chaser_type": {
+    "DEBRIS": {
+      "n": 348,
+      "observed": 8,
+      "coherent_max": 0.6229120509847504,
+      "ratio": 12.842904527778751,
+      "p_chernoff": 2.160342234207594e-06,
+      "n_missions": 13,
+      "missions_with_crossing": 4,
+      "coherent_max_missions": 0.6229120509847506,
+      "crossings_per_crossing_mission": [
+        3,
+        3,
+        1,
+        1
+      ],
+      "p_chernoff_missions": 0.01722335001535506
+    },
+    "PAYLOAD": {
+      "n": 74,
+      "observed": 1,
+      "coherent_max": 0.00038846270505017233,
+      "ratio": 2574.249695014722,
+      "p_chernoff": 0.0010555409942094177,
+      "n_missions": 7,
+      "missions_with_crossing": 1,
+      "coherent_max_missions": 0.00038846270505017233,
+      "crossings_per_crossing_mission": [
+        1
+      ],
+      "p_chernoff_missions": 0.0010555409942094177
+    },
+    "ROCKET BODY": {
+      "n": 5,
+      "observed": 0,
+      "coherent_max": 0.0024413728254532824,
+      "ratio": 0.0,
+      "p_chernoff": 1.0,
+      "n_missions": 5,
+      "missions_with_crossing": 0,
+      "coherent_max_missions": 0.0024413728254532824,
+      "crossings_per_crossing_mission": [],
+      "p_chernoff_missions": 1.0
+    },
+    "TBA": {
+      "n": 1,
+      "observed": 0,
+      "coherent_max": 1.5416365063625824e-08,
+      "ratio": 0.0,
+      "p_chernoff": 1.0,
+      "n_missions": 1,
+      "missions_with_crossing": 0,
+      "coherent_max_missions": 1.5416365063625824e-08,
+      "crossings_per_crossing_mission": [],
+      "p_chernoff_missions": 1.0
+    },
+    "UNKNOWN": {
+      "n": 195,
+      "observed": 7,
+      "coherent_max": 0.35850189460291837,
+      "ratio": 19.525698763051995,
+      "p_chernoff": 7.081412361613945e-07,
+      "n_missions": 13,
+      "missions_with_crossing": 5,
+      "coherent_max_missions": 0.35850189460291837,
+      "crossings_per_crossing_mission": [
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "p_chernoff_missions": 0.00019650982507445926
+    }
+  },
+  "splits": {
+    "chaser_payload": {
+      "n": 74,
+      "observed": 1,
+      "coherent_max": 0.00038846270505017233,
+      "ratio": 2574.249695014722,
+      "p_chernoff": 0.0010555409942094177,
+      "n_missions": 7,
+      "missions_with_crossing": 1,
+      "coherent_max_missions": 0.00038846270505017233,
+      "crossings_per_crossing_mission": [
+        1
+      ],
+      "p_chernoff_missions": 0.0010555409942094177
+    },
+    "chaser_not_payload": {
+      "n": 549,
+      "observed": 15,
+      "coherent_max": 0.9838553338294872,
+      "ratio": 15.246143903713046,
+      "p_chernoff": 2.1864223929442678e-12,
+      "n_missions": 16,
+      "missions_with_crossing": 7,
+      "coherent_max_missions": 0.9838553338294871,
+      "crossings_per_crossing_mission": [
+        4,
+        4,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "p_chernoff_missions": 0.00044423304564842676
+    },
+    "dilution_region": {
+      "n": 63,
+      "observed": 4,
+      "coherent_max": 1.3308245035255904e-06,
+      "ratio": 3005655.5085988347,
+      "p_chernoff": 6.689914061034672e-25,
+      "n_missions": 6,
+      "missions_with_crossing": 2,
+      "coherent_max_missions": 1.33082450352559e-06,
+      "crossings_per_crossing_mission": [
+        3,
+        1
+      ],
+      "p_chernoff_missions": 3.2716736164694774e-12
+    },
+    "outside_dilution": {
+      "n": 560,
+      "observed": 12,
+      "coherent_max": 0.9842424657100337,
+      "ratio": 12.19211771292878,
+      "p_chernoff": 5.6381022324715665e-09,
+      "n_missions": 16,
+      "missions_with_crossing": 7,
+      "coherent_max_missions": 0.9842424657100338,
+      "crossings_per_crossing_mission": [
+        4,
+        2,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "p_chernoff_missions": 0.00044528566524395017
+    },
+    "scaling_missing": {
+      "n": 0,
+      "observed": 0,
+      "coherent_max": 0.0,
+      "ratio": null,
+      "p_chernoff": 1.0,
+      "n_missions": 0,
+      "missions_with_crossing": 0,
+      "coherent_max_missions": 0.0,
+      "crossings_per_crossing_mission": [],
+      "p_chernoff_missions": 1.0
+    }
+  },
+  "crossings_by_payload_and_dilution": {
+    "payload|dilution": 1,
+    "payload|outside": 0,
+    "not_payload|dilution": 3,
+    "not_payload|outside": 12
+  },
+  "code": {
+    "commit": "a065bbb0e4d9a49b1aee6929b6fde5b0817f2fcf",
+    "dirty": true
+  },
+  "runtime_s": 92.0
+}
