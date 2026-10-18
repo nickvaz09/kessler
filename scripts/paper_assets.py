@@ -51,9 +51,9 @@ COH = load("reports/paper/coherence.json")
 CPH = load("reports/paper/coherence_posthoc.json")    # post hoc, not pre-registered
 PUB = load("reports/paper/public.json")
 EWP = load("reports/paper/ew_posthoc.json")    # post hoc, not pre-registered
-REVC = load("reports/paper/review_coherence.json")    # post hoc, after the review
-REVV = load("reports/paper/review_cv.json")    # post hoc, after the review
-REVM = load("reports/paper/review_mix.json")    # post hoc, after the review: the operational class mix
+REVC = load("reports/paper/review_coherence.json")    # post hoc (2026-10-18)
+REVV = load("reports/paper/review_cv.json")    # post hoc (2026-10-18)
+REVM = load("reports/paper/review_mix.json")    # post hoc (2026-10-18): the operational class mix
 
 from backend.app.models.lab import compete  # noqa: E402  (leaderboard constants)
 
@@ -294,7 +294,7 @@ m("horMixOneCI", ci(r1["delta_L_pct_bench_mix_ci95"]))
 m("horLRPmixtwo", f(r2["lrp_bench_mix"]["L"], 3))
 m("horLRPmixone", f(r1["lrp_bench_mix"]["L"], 3))
 
-# post hoc, after the review: the training-file analyses at the operational class mix. The
+# post hoc (2026-10-18): the training-file analyses at the operational class mix. The
 # organizers put most high-risk events in the test, so the training file's share is depleted
 # and the pooled events (ESA's full population) carry the operational one
 mx_ = REVM["class_mixes"]
@@ -526,7 +526,7 @@ for key, name in (("Zero", "A0"), ("Pub", "PUB")):
     m(f"aucLat{key}CI", ci(fa2_["d_roc_auc_vs_latest_risk"][name]["ci95"], 3))
     assert fa2_["d_roc_auc_vs_latest_risk"][name]["ci95"][0] > 0
 
-# post hoc, after the review: P6 counted by mission, and the crossings by chaser type and dilution
+# post hoc (2026-10-18): P6 counted by mission, and the crossings by chaser type and dilution
 rp_ = REVC["primary"]
 assert rp_["reproduces_registered"] and rp_["observed"] == COH["a_low_end"]["primary_any_later_cdm"]["observed"]
 assert rp_["coherent_max_missions"] <= rp_["coherent_max"] + 1e-12
@@ -550,7 +550,7 @@ m("cohOutObs", n(sp_["outside_dilution"]["observed"])); m("cohOutN", n(sp_["outs
 m("cohOutRatio", f(sp_["outside_dilution"]["ratio"], 0))
 m("cohOutMissionP", sci(sp_["outside_dilution"]["p_chernoff_missions"]))
 
-# post hoc, after the review: corrected repeated k-fold intervals (Nadeau-Bengio / Bouckaert-Frank),
+# post hoc (2026-10-18): corrected repeated k-fold intervals (Nadeau-Bengio / Bouckaert-Frank),
 # an isotonic latest-risk baseline, false-alarm thresholds set in the training folds, rotated covariances
 rv_ = REVV
 assert all(rv_["reproduces_registered"].values())

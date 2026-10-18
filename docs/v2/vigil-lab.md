@@ -953,7 +953,7 @@ pre-registered**; the registered results stay as recorded.
 
 ## Review checks (2026-10-18, post hoc)
 
-An outside review of the paper asked for five more checks. All are post hoc, none looks at
+Five more checks, added after the paper was drafted. All are post hoc, none looks at
 the sealed test again, and every registered result stays as recorded. Computed by
 `review coherence` and `review cv` (`backend/app/models/lab/review.py`; reports
 `reports/paper/review_coherence.json` and `review_cv.json`). The cv run repeats the folds and
@@ -997,7 +997,7 @@ significantly.
 
 ## Review checks 2 (2026-10-18, post hoc): the operational class mix
 
-A second outside review pointed out that the training file's mix is not the natural one.
+The training file's mix is not the natural one.
 The organizers put 150 of the 216 high-risk eligible events into the test, so the test is
 enriched (6.9%) and the training file depleted (0.8%). The pooled events, ESA's full
 population, hold 2.1% (216 of 10,460): that is the operational mix. So "the real sky has

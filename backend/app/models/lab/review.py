@@ -1,4 +1,4 @@
-"""Post-hoc checks added after a review of the paper (not pre-registered).
+"""Post-hoc checks added after the paper was drafted (not pre-registered).
 
     coherence  P6: the low-end test counted by mission, which holds however the
                encounters of one mission depend on each other, and the crossings
@@ -548,7 +548,7 @@ def mix_review(train_events: list[Event], test_events: list[Event], seed: int = 
 def main(argv=None) -> int:
     import pandas as pd
 
-    p = argparse.ArgumentParser(description="VIGIL Lab: post-hoc checks from the paper's review")
+    p = argparse.ArgumentParser(description="VIGIL Lab: post-hoc checks added after the paper was drafted")
     p.add_argument("analysis", choices=("coherence", "cv", "mix"))
     p.add_argument("--train", default=DEFAULTS["train"])
     p.add_argument("--test", default=DEFAULTS["test"])
