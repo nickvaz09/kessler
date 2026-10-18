@@ -15,14 +15,14 @@ conjunction messages) and uses SGP4 to screen CubeSats and crewed stations again
 every low-Earth-orbit object in a catalog of about 33,000, over the next 72 hours.
 On top of that:
 
-- **VIGIL**, a machine-learning risk model trained on ESA's Kelvins conjunction
-  dataset. On its own held-out split it cuts overall error by 21% against the
-  carry-forward baseline, and every prediction is stored with the model version
-  that produced it. On ESA's official test set (2,167 real events) the VIGIL Lab's
-  benchmark build scored 0.661, against 0.684 for ESA's own AI (the only one of the
-  5,000 models ESA trained to beat the baseline on both its training and test data)
-  and 0.694 for the standard method. Lower is better, and the edge is inside the
-  pre-set 97.5% margin of error.
+- **VIGIL**, the risk model, trained on ESA's Kelvins conjunction dataset. Every
+  prediction is stored with the model version that produced it. On ESA's sealed
+  test set (2,167 real events), no VIGIL Lab model beat the standard latest-risk
+  method (0.694, lower is better) with confidence: the benchmark build matched it,
+  and the best, a live-feed build, scored 0.661 (-4.7%, 97.5% CI -14.0% to +3.6%).
+  The model the app ships (`vigil-0.4`) lowers squared error by 21% on its own
+  held-out split, a measure dominated by low-risk events; on high-risk events its
+  gain is small and seed-sensitive (see Risk model).
 - **VIGIL-E early warning** (research build): a classifier for events that are
   still nominal but likely to become high-risk before closest approach, the
   "should I start worrying now?" decision. It passed its pre-registered test
@@ -170,7 +170,9 @@ environment; without one, the endpoint returns a clear instruction instead of fa
   conditions on the final value and punishes learned decay), and below it, it
   predicts the log10 correction to the last known risk, trained only on that domain.
   On a held-out split of 2,586 events: high-risk MSE **13.77 vs 14.87** for
-  carry-forward, and overall MSE **17.81 vs 22.59** (-21%).
+  carry-forward (seed-sensitive: 13.77 to 14.93 across seeds), and overall MSE
+  **17.81 vs 22.59** (-21%), which low-risk events dominate. ESA's official score is
+  judged on the high-risk events, and there the VIGIL Lab found no reliable gain.
 - **Ship gate.** `train.py` enforces a gate fixed before evaluation: high-risk MSE
   within 2% of the baseline and overall MSE at least 10% better. A model that fails
   is not saved, and the API keeps serving the heuristic (`heuristic-0.1`). Every
@@ -185,8 +187,9 @@ The plans and their results are in `docs/v2/vigil-lab.md`, and every report is i
 `reports/`. This repository starts from a clean snapshot of the project; the original
 commit history, which dates each pre-registration, is available on request.
 
-- On the official loss, no model beats the latest-risk baseline with confidence: the
-  benchmark build scores 0.661 against 0.694, inside the pre-set 97.5% margin.
+- On the official loss, no model beats the latest-risk baseline (0.694) with
+  confidence: the benchmark build matches it, and the best, a live-feed build, scores
+  0.661 (-4.7%, 97.5% CI [-14.0, +3.6]%).
 - As a false-alarm filter, VIGIL's classifier removes 28% of the baseline's false
   alarms while keeping 95% of its true calls; the latest risk alone removes 9%
   (pooled cross-validation).
