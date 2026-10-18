@@ -10,12 +10,19 @@
                - false-alarm thresholds set inside the training folds
                - the benchmark features with the chaser's covariance rotated into
                  the target's frame (A0R)
+    mix        the training-file analyses re-scored at the operational class mix.
+               The organizers moved most high-risk events into the test, so the
+               training file's own share (0.8%) is depleted; the pooled events,
+               ESA's full population, hold 2.1%. Covers Round 2's go/no-go CV, the
+               winner's rules out of sample (P2(d)) and the information horizon
+               (P1), each in its registered folds, seeds and bootstrap draws
 
 The sealed test stays spent: nothing here trains on the training file and scores
 the official test as a held-out set. The registered functions are not changed.
 
     .venv/bin/python -m backend.app.models.lab.review coherence --out reports/paper
     .venv/bin/python -m backend.app.models.lab.review cv --out reports/paper
+    .venv/bin/python -m backend.app.models.lab.review mix --out reports/paper
 """
 from __future__ import annotations
 
@@ -30,7 +37,8 @@ from pathlib import Path
 import numpy as np
 
 from backend.app.models.lab import candidates as C
-from backend.app.models.lab import data, metric, physics, protocol
+from backend.app.models.lab import compete, data, metric, physics, protocol
+from backend.app.models.lab import paper as P
 from backend.app.models.lab import round4 as R4
 from backend.app.models.lab.data import HIGH_RISK, Event
 from backend.app.models.lab.paper import DEFAULTS, _write
@@ -309,11 +317,239 @@ def cv_review(events: list[Event], repeats: int = 5, folds: int = 5, seed: int =
             "p8_forecast": forecast, "p8_false_alarms": false_alarms, "early_warning": early}
 
 
+# --- the class mix -----------------------------------------------------------------
+
+def class_mixes(train_events: list[Event], test_events: list[Event]) -> dict:
+    """High-risk shares of the training file's eligible events, the test and the two
+    pooled. The pooled share is ESA's full population, so it is the operational one."""
+    def share(evs):
+        k = int(sum(e.target >= HIGH_RISK for e in evs))
+        return {"n": len(evs), "n_high_risk": k, "prevalence": k / len(evs)}
+    el = [e for e in train_events if e.test_eligible]
+    pooled = [e for e in list(train_events) + list(test_events) if e.test_eligible]
+    return {"training_file": share(el), "test": share([e for e in test_events if e.test_eligible]),
+            "pooled": share(pooled)}
+
+
+def _weights(y, prevalence):
+    return None if prevalence is None else metric.label_shift_weights(y >= HIGH_RISK, prevalence)
+
+
+def round2_cv_mix(train_events: list[Event], prevalence: float, repeats: int = 5, folds: int = 5,
+                  seed: int = 42, bootstrap: int = 1000, log=print) -> dict:
+    """Round 2's go/no-go cross-validation for its primary alone, scored at three mixes.
+    Same folds, seeds and bootstrap stream as protocol.cross_validate. Decisions: the
+    model's own (tuned on the training folds), Round 2's (the test's mix) and one
+    tuned for ``prevalence``."""
+    from sklearn.model_selection import StratifiedKFold
+
+    b = protocol.Bundle(train_events)
+    n, el = len(train_events), b.eligible
+    m_ew = int((b.cand & el).sum())        # cross_validate's bootstrap draws these too
+    names = ("own", "round2", "operational")
+    oof = {k: [] for k in names}
+    for r in range(repeats):
+        o = {k: np.full(n, np.nan) for k in names}
+        skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed + 101 * r)
+        for f, (tr, te) in enumerate(skf.split(np.zeros(n), b.strata)):
+            t0 = time.time()
+            tr = tr[b.trainable[tr]]
+            mdl = next(c for c in C.regression_pool() if c.name == "hurdle_lrp_serving")
+            mdl.fit(protocol._ctx(b, tr, mdl.track, seed + 1000 * r + f))
+            X, lat = b.X[mdl.track][te], b.latest[te]
+            o["own"][te] = mdl.predict(X, lat)
+            o["round2"][te] = mdl.with_prior("hurdle_lrp_serving_bench", C.BENCH_HR_PREVALENCE).predict(X, lat)
+            o["operational"][te] = mdl.with_prior("hurdle_lrp_serving_op", prevalence).predict(X, lat)
+            log(f"  round 2 cv: repeat {r + 1}/{repeats} fold {f + 1}/{folds}  {time.time() - t0:.0f}s")
+        for k in names:
+            oof[k].append(o[k][el])
+    y, lrp = b.y[el], metric.lrp(b.latest[el])
+    mixes = {"training_file": None, "test": C.BENCH_HR_PREVALENCE, "operational": prevalence}
+    out = {}
+    for mx, prev in mixes.items():
+        w = _weights(y, prev)
+        base = P._score(lrp, y, w)
+        rows = {"lrp": base}
+        for k in names:
+            s = [P._score(oof[k][r], y, w) for r in range(repeats)]
+            rows[k] = {**{q: float(np.mean([x[q] for x in s])) for q in base},
+                       "delta_L_pct": float(np.mean([P._rel(x["L"], base["L"]) for x in s]))}
+        out[mx] = rows
+    rng = np.random.RandomState(seed + 7)
+    boot = {(mx, k): np.full(bootstrap, np.nan) for mx in mixes for k in names}
+    ny = len(y)
+    for bi in range(bootstrap):
+        i = rng.randint(0, ny, ny)
+        if m_ew:
+            rng.randint(0, m_ew, m_ew)     # the early-warning draw, so the stream stays aligned
+        yi = y[i]
+        for mx, prev in mixes.items():
+            w = _weights(yi, prev)
+            base = metric.official(lrp[i], yi, weights=w)["L"]
+            for k in names:
+                vals = [P._rel(metric.official(oof[k][r][i], yi, weights=w)["L"], base) for r in range(repeats)]
+                if np.isfinite(vals).any():
+                    boot[(mx, k)][bi] = np.nanmean(vals)
+    for (mx, k), v in boot.items():
+        out[mx][k]["delta_L_pct_ci95"] = protocol._ci(v)
+    reg = json.loads(Path("reports/vigil-lab-r2-sealed/lab_report.json").read_text())["cv"]["regression"]
+    r2, own = reg["hurdle_lrp_serving_bench"], reg["hurdle_lrp_serving"]
+    reproduced = {
+        "training_file_round2": abs(out["training_file"]["round2"]["delta_L_pct"] - r2["delta_L_pct_vs_lrp"]["mean"]) < 1e-9,
+        "training_file_round2_ci": np.allclose(out["training_file"]["round2"]["delta_L_pct_ci95"],
+                                               r2["delta_L_pct_vs_lrp"]["ci95"], rtol=0, atol=1e-9),
+        "training_file_own": abs(out["training_file"]["own"]["delta_L_pct"] - own["delta_L_pct_vs_lrp"]["mean"]) < 1e-9,
+        "test_round2": abs(out["test"]["round2"]["delta_L_pct"] - r2["bench_mix"]["delta_L_pct"]["mean"]) < 1e-9,
+    }
+    return {"model": "hurdle_lrp_serving (the Round 2 primary's fitted model)", "repeats": repeats,
+            "folds": folds, "bootstrap": bootstrap, "n_eligible": int(ny), "n_high_risk": int((y >= HIGH_RISK).sum()),
+            "reproduces_registered": reproduced, "mixes": out}
+
+
+def winner_rules_mix(train_events: list[Event], test_events: list[Event], prevalence: float,
+                     bootstrap: int = 2000, seed: int = 42) -> dict:
+    """P2(d), sesc's published cascade on the training file, at three mixes. The
+    random stream first replays P2 (a) and (c), so the registered intervals are
+    reproduced; no model is scored on the test."""
+    rng = np.random.RandomState(seed)
+    s = P.side(test_events)
+    hr_test = s["y"] >= HIGH_RISK
+    pos, neg, nt = np.flatnonzero(hr_test), np.flatnonzero(~hr_test), len(hr_test)
+    for _ in range(bootstrap):          # (a)
+        rng.randint(0, nt, nt)
+        rng.choice(pos, len(pos))
+        rng.choice(neg, len(neg))
+    for _ in range(bootstrap):          # (c)
+        P.stratified_mask(hr_test, 0.9, rng)
+    t = P.side([e for e in train_events if e.test_eligible])
+    y = t["y"]
+    lp, sp = metric.lrp(t["latest"]), compete.sesc_cascade(t)
+    mixes = {"training_file": None, "test": C.BENCH_HR_PREVALENCE, "operational": prevalence}
+    out = {}
+    for mx, prev in mixes.items():
+        w = _weights(y, prev)
+        out[mx] = {"lrp": P._score(lp, y, w), "sesc_cascade": P._score(sp, y, w)}
+        out[mx]["delta_L_pct"] = P._rel(out[mx]["sesc_cascade"]["L"], out[mx]["lrp"]["L"])
+    boot = {mx: [] for mx in mixes}
+    for _ in range(bootstrap):
+        i = rng.randint(0, len(y), len(y))
+        yi = y[i]
+        if not (yi >= HIGH_RISK).any():
+            continue
+        for mx, prev in mixes.items():
+            w = _weights(yi, prev)
+            boot[mx].append(P._rel(metric.official(sp[i], yi, weights=w)["L"],
+                                   metric.official(lp[i], yi, weights=w)["L"]))
+    for mx in mixes:
+        out[mx]["delta_L_pct_ci95"] = protocol._ci(boot[mx])
+    reg = json.loads(Path("reports/paper/resolution.json").read_text())["d_sesc_out_of_sample"]
+    reproduced = {f"{mx}{suffix}": np.allclose(np.atleast_1d(out[mx][key]), np.atleast_1d(reg[rk][key]),
+                                               rtol=0, atol=1e-9)
+                  for mx, rk in (("training_file", "natural"), ("test", "bench_mix"))
+                  for key, suffix in (("delta_L_pct", ""), ("delta_L_pct_ci95", "_ci"))}
+    return {"n": int(len(y)), "n_high_risk": int((y >= HIGH_RISK).sum()), "bootstrap": bootstrap,
+            "reproduces_registered": reproduced, "mixes": out}
+
+
+def horizon_mix(train_events: list[Event], prevalence: float, repeats: int = 3, folds: int = 5,
+                seed: int = 42, bootstrap: int = 1000, log=print) -> dict:
+    """P1 at three mixes: paper.horizon's folds, seeds and bootstrap draws, plus the same
+    fitted model with its decision re-tuned for ``prevalence``."""
+    from sklearn.model_selection import StratifiedKFold
+
+    cutoffs = P.CUTOFFS
+    preds, y = {}, None
+    for c in cutoffs:
+        t0 = time.time()
+        evs = [P.at_cutoff(e, c) for e in train_events]
+        b = P.CutoffBundle(evs, c)
+        el = b.eligible
+        if y is None:
+            y = b.y[el]
+        elif not np.array_equal(y, b.y[el]):
+            raise RuntimeError("the scored events changed between cutoffs")
+        o = {k: np.full((repeats, len(evs)), np.nan) for k in ("own", "test", "operational")}
+        for r in range(repeats):
+            skf = StratifiedKFold(n_splits=folds, shuffle=True, random_state=seed + r)
+            for tr, te in skf.split(np.zeros(len(evs)), b.strata):
+                tr = tr[b.trainable[tr]]
+                m = C.Hurdle("hurdle_lrp", mode="lrp")
+                m.fit(protocol._ctx(b, tr, "benchmark", seed))
+                X, lat = b.X["benchmark"][te], b.latest[te]
+                o["own"][r, te] = m.predict(X, lat)
+                o["test"][r, te] = m.with_prior("hurdle_lrp_bench", C.BENCH_HR_PREVALENCE).predict(X, lat)
+                o["operational"][r, te] = m.with_prior("hurdle_lrp_op", prevalence).predict(X, lat)
+        preds[c] = {"lrp": metric.lrp(b.latest[el]), **{k: v[:, el] for k, v in o.items()}}
+        log(f"  horizon: cutoff {c:.2f} d  ({time.time() - t0:.0f}s)")
+    # each mix scores the decision tuned for it, as P1 did for its two
+    mixes = {"training_file": ("own", None), "test": ("test", C.BENCH_HR_PREVALENCE),
+             "operational": ("operational", prevalence)}
+    rows = {str(c): {} for c in cutoffs}
+    for mx, (k, prev) in mixes.items():
+        w = _weights(y, prev)
+        L2 = metric.official(preds[cutoffs[0]]["lrp"], y, weights=w)["L"]
+        for c in cutoffs:
+            p = preds[c]
+            Lb = metric.official(p["lrp"], y, weights=w)["L"]
+            Lm = [metric.official(p[k][r], y, weights=w)["L"] for r in range(repeats)]
+            rows[str(c)][mx] = {"lrp_L": Lb, "model_L": float(np.mean(Lm)), "lrp_L_ratio_to_2d": Lb / L2,
+                                "delta_L_pct": float(np.mean([P._rel(v, Lb) for v in Lm]))}
+    rng = np.random.RandomState(seed + 7)
+    boot = {(str(c), mx, q): np.full(bootstrap, np.nan) for c in cutoffs for mx in mixes for q in ("dl", "ratio")}
+    n = len(y)
+    for bi in range(bootstrap):
+        i = rng.randint(0, n, n)
+        yi = y[i]
+        if not (yi >= HIGH_RISK).any():
+            continue
+        for mx, (k, prev) in mixes.items():
+            w = _weights(yi, prev)
+            b2 = metric.official(preds[cutoffs[0]]["lrp"][i], yi, weights=w)["L"]
+            for c in cutoffs:
+                p = preds[c]
+                Lb = metric.official(p["lrp"][i], yi, weights=w)["L"]
+                Lm = [metric.official(p[k][r][i], yi, weights=w)["L"] for r in range(repeats)]
+                boot[(str(c), mx, "dl")][bi] = np.nanmean([P._rel(v, Lb) for v in Lm])
+                boot[(str(c), mx, "ratio")][bi] = Lb / b2 if b2 > 0 else np.nan
+    for c in cutoffs:
+        for mx in mixes:
+            rows[str(c)][mx]["delta_L_pct_ci95"] = protocol._ci(boot[(str(c), mx, "dl")])
+            rows[str(c)][mx]["lrp_L_ratio_to_2d_ci95"] = protocol._ci(boot[(str(c), mx, "ratio")])
+    reg = json.loads(Path("reports/paper/horizon.json").read_text())["rows"]
+    reproduced = {}
+    for c in cutoffs:
+        g, mine = reg[str(c)], rows[str(c)]
+        for mx, suffix in (("training_file", ""), ("test", "_bench_mix")):
+            for key in ("delta_L_pct", "lrp_L_ratio_to_2d"):
+                reproduced[f"{c}_{mx}_{key}"] = (
+                    abs(mine[mx][key] - g[key + suffix]) < 1e-9
+                    and np.allclose(mine[mx][key + "_ci95"], g[key + suffix + "_ci95"], rtol=0, atol=1e-9))
+    return {"cutoffs": list(cutoffs), "repeats": repeats, "folds": folds, "bootstrap": bootstrap,
+            "n_scored": int(n), "n_high_risk": int((y >= HIGH_RISK).sum()),
+            "reproduces_registered": reproduced, "rows": rows}
+
+
+def mix_review(train_events: list[Event], test_events: list[Event], seed: int = 42, log=print) -> dict:
+    mixes = class_mixes(train_events, test_events)
+    op = mixes["pooled"]["prevalence"]
+    log(f"operational mix: {mixes['pooled']['n_high_risk']} of {mixes['pooled']['n']} high-risk ({100 * op:.2f}%)")
+    winner = winner_rules_mix(train_events, test_events, op, seed=seed)
+    log(f"  winner's rules at the operational mix: {winner['mixes']['operational']['delta_L_pct']:+.1f}%")
+    r2 = round2_cv_mix(train_events, op, seed=seed, log=log)
+    hor = horizon_mix(train_events, op, seed=seed, log=log)
+    return {"analysis": "Post hoc (review): the training-file analyses re-scored at the operational "
+                        "class mix with label-shift weights",
+            "why": "the organizers moved most high-risk events into the test, so the training file's own "
+                   "share is depleted; the pooled events are ESA's full population",
+            "class_mixes": mixes, "operational_prevalence": op, "round2_cv": r2,
+            "winner_rules": winner, "horizon": hor}
+
+
 def main(argv=None) -> int:
     import pandas as pd
 
     p = argparse.ArgumentParser(description="VIGIL Lab: post-hoc checks from the paper's review")
-    p.add_argument("analysis", choices=("coherence", "cv"))
+    p.add_argument("analysis", choices=("coherence", "cv", "mix"))
     p.add_argument("--train", default=DEFAULTS["train"])
     p.add_argument("--test", default=DEFAULTS["test"])
     p.add_argument("--test-targets", default=DEFAULTS["test_targets"])
@@ -330,6 +566,9 @@ def main(argv=None) -> int:
         _write(out, "review_coherence", coherence_review(test, late), t0)
         return 0
     print(f"loaded {len(train)} training events, {len(test)} test events")
+    if a.analysis == "mix":
+        _write(out, "review_mix", mix_review(train, test, seed=a.seed), t0)
+        return 0
     _write(out, "review_cv", cv_review(train + test, seed=a.seed), t0)
     return 0
 

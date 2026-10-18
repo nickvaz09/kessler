@@ -995,6 +995,39 @@ while keeping 96% of its true calls; the latest risk alone removes 10%." Say poo
 post hoc. Quantities with public counterparts keep part of the gain, not most of it
 significantly.
 
+## Review checks 2 (2026-10-18, post hoc): the operational class mix
+
+A second outside review pointed out that the training file's mix is not the natural one.
+The organizers put 150 of the 216 high-risk eligible events into the test, so the test is
+enriched (6.9%) and the training file depleted (0.8%). The pooled events, ESA's full
+population, hold 2.1% (216 of 10,460): that is the operational mix. So "the real sky has
+the training file's mix" (Round 2's notes above) is wrong, and so is every "natural mix"
+label. Computed by `review mix` (`backend/app/models/lab/review.py`;
+`reports/paper/review_mix.json`), which repeats each analysis's registered folds, seeds and
+bootstrap draws (all registered rows and intervals reproduced exactly) and adds the
+operational mix by label-shift weights. **Not pre-registered**; the registered results stay
+as recorded.
+
+- **Round 2's decision** (training-file CV, decision set for the test's mix): +20.8% [+2.8, +41.4] at the
+  training file's mix, as registered; +2.6% [-12.6, +17.6] at the operational mix, not
+  significant. Its extra calls still lift recall from 0.71 (LRP) to 0.82 and cut precision
+  from 0.32 to 0.21. A decision set for the operational mix: -1.9% [-7.2, +3.3].
+- **The winner's rules out of sample** (P2(d)): +30.7% [+4.5, +64.8] at the training file's mix,
+  as registered; +8.9% [-12.1, +35.1] at the operational mix, not significant (precision
+  0.32 for LRP, 0.20 for the cascade).
+- **The information horizon** (P1): one more day of messages lowers LRP's loss by
+  45% (95% CI 16-69%) at the operational mix (52% (95% CI 27-74%) at the training file's, 39% (95% CI 7-66%)
+  at the test's). VIGIL, decision tuned for each mix, at 2 days: +0.6% [-7.0, +8.5] at the
+  operational mix (-3.2% [-9.1, +3.4] and -12.7% [-26.2, +2.7]); at 1 day +0.4% [-2.6, +3.4]. None of
+  the five operational-mix intervals excludes 0.
+
+**What may be quoted instead:**
+- "On the official loss, one more day of messages lowers the baseline's loss by 45% at the
+  operational class mix, while the model adds nothing measurable at two days." Say post hoc
+  for the operational number; the registered 52% is at the training file's mix.
+- Never say the Round 2 decision or the winner's rules are significantly worse than LRP "in
+  operations": at the operational mix they are not. Say they raise more false alarms.
+
 ## Results so far (synthetic rehearsal only)
 
 This is a full CLI run on **synthetic** Kelvins-shaped data (5,650 training

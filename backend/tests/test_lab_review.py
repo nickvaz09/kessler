@@ -1,6 +1,8 @@
 """Post-hoc review checks: the corrected t-test, the mission-level bound, the
-in-fold threshold, the isotonic baseline and the rotated-physics switch."""
+in-fold threshold, the isotonic baseline, the rotated-physics switch and the
+class mixes."""
 import math
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
@@ -67,3 +69,14 @@ def test_rotated_physics_rotates_only_the_chaser_and_restores():
     np.testing.assert_allclose(rot_t, plain_t)
     assert not np.allclose(rot_c, plain_c)
     np.testing.assert_allclose(np.trace(rot_c), np.trace(plain_c))   # a rotation keeps the trace
+
+
+def test_class_mixes_pool_the_eligible_events_of_both_files():
+    def ev(target, eligible=True):
+        return SimpleNamespace(target=target, test_eligible=eligible)
+    train = [ev(-5.0)] + [ev(-20.0)] * 9 + [ev(-5.0, eligible=False)]
+    test = [ev(-5.0)] * 3 + [ev(-20.0)] * 7
+    mx = review.class_mixes(train, test)
+    assert mx["training_file"] == {"n": 10, "n_high_risk": 1, "prevalence": 0.1}
+    assert mx["test"]["prevalence"] == pytest.approx(0.3)
+    assert mx["pooled"] == {"n": 20, "n_high_risk": 4, "prevalence": 0.2}

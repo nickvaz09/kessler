@@ -1,0 +1,34 @@
+loaded 11942 training events, 2167 test events
+operational mix: 216 of 10460 high-risk (2.07%)
+  winner's rules at the operational mix: +8.9%
+  round 2 cv: repeat 1/5 fold 1/5  2s
+  round 2 cv: repeat 1/5 fold 2/5  2s
+  round 2 cv: repeat 1/5 fold 3/5  3s
+  round 2 cv: repeat 1/5 fold 4/5  3s
+  round 2 cv: repeat 1/5 fold 5/5  3s
+  round 2 cv: repeat 2/5 fold 1/5  2s
+  round 2 cv: repeat 2/5 fold 2/5  2s
+  round 2 cv: repeat 2/5 fold 3/5  3s
+  round 2 cv: repeat 2/5 fold 4/5  2s
+  round 2 cv: repeat 2/5 fold 5/5  2s
+  round 2 cv: repeat 3/5 fold 1/5  2s
+  round 2 cv: repeat 3/5 fold 2/5  2s
+  round 2 cv: repeat 3/5 fold 3/5  3s
+  round 2 cv: repeat 3/5 fold 4/5  4s
+  round 2 cv: repeat 3/5 fold 5/5  2s
+  round 2 cv: repeat 4/5 fold 1/5  2s
+  round 2 cv: repeat 4/5 fold 2/5  2s
+  round 2 cv: repeat 4/5 fold 3/5  3s
+  round 2 cv: repeat 4/5 fold 4/5  2s
+  round 2 cv: repeat 4/5 fold 5/5  2s
+  round 2 cv: repeat 5/5 fold 1/5  2s
+  round 2 cv: repeat 5/5 fold 2/5  3s
+  round 2 cv: repeat 5/5 fold 3/5  2s
+  round 2 cv: repeat 5/5 fold 4/5  3s
+  round 2 cv: repeat 5/5 fold 5/5  2s
+  horizon: cutoff 2.00 d  (98s)
+  horizon: cutoff 1.75 d  (97s)
+  horizon: cutoff 1.50 d  (139s)
+  horizon: cutoff 1.25 d  (132s)
+  horizon: cutoff 1.00 d  (115s)
+→ reports/paper/review_mix.json
