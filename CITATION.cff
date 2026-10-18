@@ -5,6 +5,7 @@ title: "Kessler: collision-risk monitoring for small satellites"
 authors:
   - family-names: Vazquez
     given-names: Nicolas
+    orcid: "https://orcid.org/0009-0009-4300-6369"
 repository-code: "https://github.com/nickvaz09/kessler"
 doi: 10.5281/zenodo.23448061
 license: MIT
