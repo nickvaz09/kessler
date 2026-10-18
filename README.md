@@ -182,11 +182,13 @@ environment; without one, the endpoint returns a clear instruction instead of fa
 
 `backend/app/models/lab/` re-evaluates machine learning on ESA's Collision Avoidance
 Challenge in four pre-registered rounds. Each round's plan and frozen code were
-committed before its real-data runs, and ESA's official test set was scored once.
-The plans and their results are in `docs/v2/vigil-lab.md`, and every report is in
-`reports/`. This repository starts from a clean snapshot of the project; the original
-commit history, which dates each pre-registration, is kept as a git bundle that editors
-and reviewers can ask for, and `scripts/check_history.py` checks it against the paper.
+committed before its real-data runs, and ESA's official test set was scored once. The
+plans and their results are in `docs/v2/vigil-lab.md`, every report is in `reports/`,
+and `scripts/paper_assets.py` rebuilds every figure, table and number in the paper
+from those reports (it needs matplotlib). This repository starts from a clean snapshot
+of the project; the original commit history, which dates each pre-registration, is
+kept as a git bundle that editors and reviewers can ask for, and
+`scripts/check_history.py` checks it against the paper.
 
 - On the official loss, no model beats the latest-risk baseline (0.694) with
   confidence: the benchmark build matches it, and the best, a live-feed build, scores

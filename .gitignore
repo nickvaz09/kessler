@@ -20,6 +20,9 @@ data/reports/
 data/tts/
 data/*.log
 
+# the paper's numbers and figures (scripts/paper_assets.py)
+/paper/
+
 # os / editor
 .DS_Store
 media/
