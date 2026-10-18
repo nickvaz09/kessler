@@ -152,9 +152,11 @@ def _run_cycle(conn, demo: bool, full_catalog: bool | None) -> dict:
     cdms_added = rec_stats["cdms_added"]
 
     # 3b. Space-Track CDM enrichment - only when both credential env vars are
-    # set; lazy import, never fatal (failures go to stderr, the stat stays 0).
+    # set (and KESSLER_SPACETRACK_CDMS isn't off); lazy import, never fatal
+    # (failures go to stderr, the stat stays 0).
     spacetrack_cdms = 0
-    if os.environ.get("SPACETRACK_IDENTITY") and os.environ.get("SPACETRACK_PASSWORD"):
+    if (os.environ.get("SPACETRACK_IDENTITY") and os.environ.get("SPACETRACK_PASSWORD")
+            and config.spacetrack_cdms_enabled()):
         try:
             from backend.app.ingestion import spacetrack
             st_stats = spacetrack.refresh_cdms(conn)

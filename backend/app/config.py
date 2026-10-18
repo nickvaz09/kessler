@@ -87,6 +87,15 @@ def full_catalog_enabled() -> bool:
     return raw in ("1", "true", "yes", "on")
 
 
+def spacetrack_cdms_enabled() -> bool:
+    """KESSLER_SPACETRACK_CDMS: pull Space-Track's public CDMs when credentials
+    are set (default) or skip them ('0'/'false'/'no'/'off'). A public server
+    keeps the catalog, which Space-Track lets you share with a citation, but
+    not the CDMs, which it doesn't."""
+    raw = os.environ.get("KESSLER_SPACETRACK_CDMS", "").strip().lower()
+    return raw not in ("0", "false", "no", "off")
+
+
 def spaceweather_enabled() -> bool:
     """KESSLER_SPACEWEATHER: live NOAA space-weather fetches on (default) or
     off ('0'/'false'/'no'/'off'). Off, every space-weather surface degrades

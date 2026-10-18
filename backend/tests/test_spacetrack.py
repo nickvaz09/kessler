@@ -444,6 +444,21 @@ def test_pipeline_ingests_spacetrack_with_creds(tmp_path, monkeypatch,
     conn.close()
 
 
+def test_pipeline_skips_spacetrack_cdms_when_switched_off(tmp_path, monkeypatch,
+                                                          offline_celestrak):
+    monkeypatch.setenv("SPACETRACK_IDENTITY", "ops_user")
+    monkeypatch.setenv("SPACETRACK_PASSWORD", "hunter2-secret")
+    monkeypatch.setenv("KESSLER_SPACETRACK_CDMS", "0")
+    def must_not_run(*args, **kwargs):
+        raise AssertionError("CDMs were pulled with KESSLER_SPACETRACK_CDMS=0")
+    monkeypatch.setattr(spacetrack, "refresh_cdms", must_not_run)
+
+    conn = _make_conn(tmp_path)
+    stats = pipeline.refresh(conn)
+    assert stats["spacetrack_cdms"] == 0
+    conn.close()
+
+
 def test_pipeline_spacetrack_failure_is_nonfatal(tmp_path, monkeypatch, capsys,
                                                  offline_celestrak):
     monkeypatch.setenv("SPACETRACK_IDENTITY", "ops_user")
