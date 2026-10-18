@@ -181,6 +181,10 @@ environment; without one, the endpoint returns a clear instruction instead of fa
 
 ## Research: the VIGIL Lab
 
+The paper is on Zenodo as a preprint: *Is the latest message still the best forecast? A
+pre-registered re-evaluation of machine learning for satellite collision risk*,
+https://doi.org/10.5281/zenodo.23457857.
+
 `backend/app/models/lab/` re-evaluates machine learning on ESA's Collision Avoidance
 Challenge in four pre-registered rounds. Each round's plan and frozen code were
 committed before its real-data runs, and ESA's official test set was scored once. The
@@ -297,11 +301,16 @@ can't be redistributed.
 
 ## Citing
 
-If you use Kessler or the VIGIL Lab results, GitHub's "Cite this repository" button
-gives a citation from `CITATION.cff`.
+For the VIGIL Lab results, cite the paper:
 
-Every release is archived on Zenodo: https://doi.org/10.5281/zenodo.23448061 always points
-to the latest version, and v1.0 is https://doi.org/10.5281/zenodo.23448062.
+> Vazquez, N. (2026). Is the latest message still the best forecast? A pre-registered
+> re-evaluation of machine learning for satellite collision risk. Zenodo.
+> https://doi.org/10.5281/zenodo.23457857
+
+For the software, GitHub's "Cite this repository" button gives a citation from
+`CITATION.cff`. Every release is archived on Zenodo:
+https://doi.org/10.5281/zenodo.23448061 always points to the latest version, and v1.0 is
+https://doi.org/10.5281/zenodo.23448062.
 
 ## License
 
