@@ -6,6 +6,7 @@ authors:
   - family-names: Vazquez
     given-names: Nicolas
 repository-code: "https://github.com/nickvaz09/kessler"
+doi: 10.5281/zenodo.23448061
 license: MIT
 keywords:
   - space debris

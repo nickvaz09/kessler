@@ -7,6 +7,7 @@ teams and smallsat startups.
 [![CI](https://github.com/nickvaz09/kessler/actions/workflows/ci.yml/badge.svg)](https://github.com/nickvaz09/kessler/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![Python 3.13](https://img.shields.io/badge/python-3.13-blue.svg)
+[![DOI](https://zenodo.org/badge/1423835405.svg)](https://doi.org/10.5281/zenodo.23448061)
 
 ![Kessler's Overview page: a live globe of the 33,000 tracked objects, the critical close approaches in the next 72 hours, and current space weather](docs/images/kessler-overview.jpg)
 
@@ -298,6 +299,9 @@ can't be redistributed.
 
 If you use Kessler or the VIGIL Lab results, GitHub's "Cite this repository" button
 gives a citation from `CITATION.cff`.
+
+Every release is archived on Zenodo: https://doi.org/10.5281/zenodo.23448061 always points
+to the latest version, and v1.0 is https://doi.org/10.5281/zenodo.23448062.
 
 ## License
 
