@@ -227,11 +227,11 @@ cd deploy && docker compose up --build
    On stage, start with `KESSLER_SNAPSHOT=data/snapshots/demo.json.gz` and an empty
    database: the app loads the snapshot, and the header pill says "Offline snapshot"
    with its real age, so nothing pretends to be live.
-2. **Replay the real 2009 collision.** Time Machine ships with orbits reconstructed
-   from published parameters, and says so on screen. With Space-Track credentials,
-   `.venv/bin/python scripts/fetch_scenario_tles.py` fetches the archived element
-   sets once and the replay switches to them. They stay on your machine, because
-   Space-Track's terms don't allow redistributing its data.
+2. **Replay the real 2009 collision.** Time Machine replays the element sets
+   Space-Track published before the event, and says so on screen. Delete
+   `backend/app/scenarios/iridium_cosmos_2009.archived.json` to fall back to orbits
+   reconstructed from published parameters, or re-fetch it with Space-Track
+   credentials: `.venv/bin/python scripts/fetch_scenario_tles.py`.
 3. **Train VIGIL-E.** Put Kelvins' `train_data.csv` in `data/kelvins/`, then run
    `.venv/bin/python -m backend.app.models.train_escalation --data data/kelvins/train_data.csv`.
    It saves a model only if it passes its pre-registered ship gate; until then, the
@@ -264,8 +264,7 @@ vanilla JS with locally vendored fonts: no CDN, no npm.
       About page, offline snapshots, space weather
 - [x] VIGIL-E evaluated in the pre-registered VIGIL Lab (not shipped: no significant
       gain over the latest risk itself)
-- [x] Time Machine replay on archived Space-Track element sets (fetched with your own
-      credentials)
+- [x] Time Machine replay on archived Space-Track element sets
 - [ ] Wire the covariance-aware Pc (`pc.compute_pc_from_covariance`) for CDMs that
       carry a real covariance
 
@@ -276,14 +275,18 @@ vanilla JS with locally vendored fonts: no CDN, no npm.
 - Risk-model training data: the ESA Kelvins Collision Avoidance Challenge dataset
   ([Zenodo 4463683](https://zenodo.org/record/4463683)).
 - Collision facts in Time Machine: NASA Orbital Debris Quarterly News, April 2009.
+  Its element sets are Space-Track's archived TLEs (gp_history), shared under
+  USSPACECOM's blanket approval for basic SSA data with citation.
 - Earth imagery and coastlines: see `frontend/textures/CREDITS.txt`.
 - Space weather: [NOAA SWPC](https://www.swpc.noaa.gov) live feeds, and air density
   from NRLMSIS 2.1 via [pymsis](https://github.com/SWxTREC/pymsis).
 - Fonts: Inter and JetBrains Mono (SIL OFL), vendored in `frontend/fonts/`.
 
 The repository ships no bulk data: only the trained model, the derived reports, and a
-few element sets in the test fixtures and the reconstructed 2009 scenario. Data from
-CelesTrak, Space-Track.org, ESA and NOAA stays under its providers' terms.
+few element sets (the 2009 replay and the test fixtures). Data from CelesTrak,
+Space-Track.org, ESA and NOAA stays under its providers' terms; a public server
+should set `KESSLER_SPACETRACK_CDMS=0`, because Space-Track's conjunction messages
+can't be redistributed.
 
 ## Citing
 

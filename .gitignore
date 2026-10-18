@@ -24,5 +24,3 @@ data/*.log
 .DS_Store
 media/
 
-# archived Space-Track element sets: fetched locally, not redistributable
-backend/app/scenarios/*.archived.json

@@ -1,0 +1,225 @@
+{
+  "id": "iridium-cosmos-2009",
+  "title": "Iridium 33 and Cosmos 2251",
+  "summary": "On 10 February 2009 an active Iridium communications satellite and a defunct Russian Cosmos satellite collided above northern Siberia — the first accidental hypervelocity collision between two intact satellites.",
+  "provenance": "archived",
+  "provenance_label": "Archived element sets from Space-Track",
+  "provenance_note": "Element sets are the archived two-line element sets published by Space-Track (gp_history) before the event, fetched 2026-09-24T12:58:30Z. Each replayed screening run uses only the element sets published before it. Screening, closest-approach refinement and collision probability are computed by the same code Kessler runs on the live catalog.",
+  "replay_hint": null,
+  "event": {
+    "time_utc": "2009-02-10T16:56:00Z",
+    "time_label": "10 February 2009, about 16:56 UTC",
+    "altitude_km": 789,
+    "altitude_label": "about 789 km",
+    "location_label": "above northern Siberia",
+    "relative_speed_kms": 11.7,
+    "relative_speed_label": "roughly 11.7 km/s",
+    "significance": "The first accidental hypervelocity collision between two intact satellites.",
+    "debris_label": "Well over 2,000 cataloged debris fragments, many still in orbit.",
+    "source": "NASA Orbital Debris Quarterly News, vol. 13, issue 2 (April 2009)",
+    "source_short": "NASA Orbital Debris Quarterly News, April 2009"
+  },
+  "screening_window": {
+    "hours": 72,
+    "cadence_hours": 1,
+    "note": "Screening runs are replayed on an hourly cadence using only the element sets published before each run, with the live 72-hour look-ahead window."
+  },
+  "catalog_fragment_prefixes": [
+    "COSMOS 2251 DEB",
+    "IRIDIUM 33 DEB"
+  ],
+  "objects": [
+    {
+      "norad_id": 24946,
+      "name": "Iridium 33",
+      "intl_designator": "1997-051C",
+      "role": "primary",
+      "status": "active",
+      "description": "Active Iridium communications satellite",
+      "inclination_deg_published": 86.4,
+      "mass_kg": 560,
+      "mass_note": "approximate public figure",
+      "elsets": [
+        {
+          "epoch": "2009-02-03T15:28:36Z",
+          "line1": "1 24946U 97051C   09034.64486009  .00000180  00000-0  57253-4 0  9995",
+          "line2": "2 24946 086.3988 124.2659 0002237 084.9020 275.2431 14.34218571596454",
+          "published": "2009-02-03T09:02:14Z"
+        },
+        {
+          "epoch": "2009-02-03T18:49:32Z",
+          "line1": "1 24946U 97051C   09034.78439696 +.00000170 +00000-0 +53802-4 0  9995",
+          "line2": "2 24946 086.3988 124.2076 0002242 085.3366 274.8083 14.34218576596476",
+          "published": "2009-02-04T07:40:29Z"
+        },
+        {
+          "epoch": "2009-02-04T08:13:16Z",
+          "line1": "1 24946U 97051C   09035.34254472  .00000165  00000-0  51858-4 0  9998",
+          "line2": "2 24946 086.3988 123.9745 0002241 084.2897 275.8554 14.34218729596554",
+          "published": "2009-02-04T06:48:42Z"
+        },
+        {
+          "epoch": "2009-02-04T19:56:32Z",
+          "line1": "1 24946U 97051C   09035.83092395 +.00000160 +00000-0 +50019-4 0  9999",
+          "line2": "2 24946 086.3988 123.7705 0002241 082.7573 277.3877 14.34218851596621",
+          "published": "2009-02-05T07:43:56Z"
+        },
+        {
+          "epoch": "2009-02-05T09:20:16Z",
+          "line1": "1 24946U 97051C   09036.38907187  .00000063  00000-0  15487-4 0  9996",
+          "line2": "2 24946 086.3989 123.5375 0002252 084.6873 275.4579 14.34218534596704",
+          "published": "2009-02-05T06:39:28Z"
+        },
+        {
+          "epoch": "2009-02-05T21:03:32Z",
+          "line1": "1 24946U 97051C   09036.87745095 +.00000111 +00000-0 +32631-4 0  9992",
+          "line2": "2 24946 086.3990 123.3335 0002283 084.9743 275.1715 14.34218813596779",
+          "published": "2009-02-06T08:25:20Z"
+        },
+        {
+          "epoch": "2009-02-06T18:49:36Z",
+          "line1": "1 24946U 97051C   09037.78444048  .00000106  00000-0  30852-4 0  9994",
+          "line2": "2 24946 086.3993 122.9552 0002265 085.4641 274.6808 14.34218976596903",
+          "published": "2009-02-06T14:25:20Z"
+        },
+        {
+          "epoch": "2009-02-07T11:34:16Z",
+          "line1": "1 24946U 97051C   09038.48212494  .00000086  00000-0  23804-4 0  9996",
+          "line2": "2 24946 086.3996 122.6644 0002219 083.8995 276.2452 14.34219027597001",
+          "published": "2009-02-07T06:53:07Z"
+        },
+        {
+          "epoch": "2009-02-07T21:37:04Z",
+          "line1": "1 24946U 97051C   09038.90073543 +.00000118 +00000-0 +35131-4 0  9995",
+          "line2": "2 24946 086.3996 122.4895 0002249 084.4993 275.6459 14.34219243597061",
+          "published": "2009-02-08T09:16:55Z"
+        },
+        {
+          "epoch": "2009-02-08T16:02:11Z",
+          "line1": "1 24946U 97051C   09039.66818788  .00000197  00000-0  63273-4 0  9992",
+          "line2": "2 24946 086.3996 122.1691 0002268 085.1934 274.9529 14.34219784597178",
+          "published": "2009-02-08T13:35:13Z"
+        },
+        {
+          "epoch": "2009-02-08T19:23:07Z",
+          "line1": "1 24946U 97051C   09039.80772465 +.00000161 +00000-0 +50503-4 0  9992",
+          "line2": "2 24946 086.3996 122.1108 0002264 085.3765 274.7689 14.34219660597191",
+          "published": "2009-02-09T08:59:07Z"
+        },
+        {
+          "epoch": "2009-02-09T08:46:51Z",
+          "line1": "1 24946U 97051C   09040.36587205  .00000121  00000-0  36194-4 0  9997",
+          "line2": "2 24946 086.3996 121.8779 0002273 085.9342 274.2112 14.34219614597272",
+          "published": "2009-02-09T08:15:18Z"
+        },
+        {
+          "epoch": "2009-02-09T18:49:39Z",
+          "line1": "1 24946U 97051C   09040.78448243 +.00000153 +00000-0 +47668-4 0  9994",
+          "line2": "2 24946 086.3994 121.7028 0002288 085.1644 274.9812 14.34219863597336",
+          "published": "2009-02-10T09:27:21Z"
+        }
+      ]
+    },
+    {
+      "norad_id": 22675,
+      "name": "Cosmos 2251",
+      "intl_designator": "1993-036A",
+      "role": "secondary",
+      "status": "defunct",
+      "description": "Defunct Russian communications satellite",
+      "inclination_deg_published": 74.0,
+      "mass_kg": 900,
+      "mass_note": "approximate public figure",
+      "elsets": [
+        {
+          "epoch": "2009-02-03T10:00:13Z",
+          "line1": "1 22675U 93036A   09034.41681800 -.00000015  00000-0  40408-5 0  9995",
+          "line2": "2 22675 074.0355 030.5418 0016163 111.7803 248.5074 14.31135419816543",
+          "published": "2009-02-03T07:22:58Z"
+        },
+        {
+          "epoch": "2009-02-03T11:40:53Z",
+          "line1": "1 22675U 93036A   09034.48672051 -.00000016 +00000-0 +36261-5 0  9993",
+          "line2": "2 22675 074.0355 030.4145 0016159 111.6249 248.6623 14.31135407816556",
+          "published": "2009-02-04T07:40:29Z"
+        },
+        {
+          "epoch": "2009-02-04T11:10:07Z",
+          "line1": "1 22675U 93036A   09035.46535698 -.00000026  00000-0 -26115-6 0  9997",
+          "line2": "2 22675 074.0354 028.6319 0016135 109.5197 250.7693 14.31135332816692",
+          "published": "2009-02-04T06:43:21Z"
+        },
+        {
+          "epoch": "2009-02-04T22:54:44Z",
+          "line1": "1 22675U 93036A   09035.95467532 -.00000028 +00000-0 -80821-6 0  9998",
+          "line2": "2 22675 074.0355 027.7407 0016118 108.6256 251.6657 14.31135355816761",
+          "published": "2009-02-05T07:43:56Z"
+        },
+        {
+          "epoch": "2009-02-05T22:23:58Z",
+          "line1": "1 22675U 93036A   09036.93331212 -.00000047 +00000-0 -81496-5 0  9991",
+          "line2": "2 22675 074.0354 025.9581 0016099 106.4347 253.8581 14.31135117816900",
+          "published": "2009-02-06T08:25:20Z"
+        },
+        {
+          "epoch": "2009-02-06T21:53:12Z",
+          "line1": "1 22675U 93036A   09037.91194855 -.00000031 +00000-0 -21372-5 0  9990",
+          "line2": "2 22675 074.0355 024.1758 0016095 104.4460 255.8485 14.31135215817048",
+          "published": "2009-02-07T08:01:35Z"
+        },
+        {
+          "epoch": "2009-02-07T02:55:11Z",
+          "line1": "1 22675U 93036A   09038.12165621 -.00000023  00000-0  11594-5 0  9998",
+          "line2": "2 22675 074.0359 023.7939 0016083 103.9527 256.3415 14.31135293817071",
+          "published": "2009-02-06T22:32:01Z"
+        },
+        {
+          "epoch": "2009-02-07T21:22:27Z",
+          "line1": "1 22675U 93036A   09038.89058467 -.00000013 +00000-0 +49305-5 0  9991",
+          "line2": "2 22675 074.0354 022.3935 0016068 102.2399 258.0553 14.31135381817181",
+          "published": "2009-02-08T09:16:55Z"
+        },
+        {
+          "epoch": "2009-02-08T10:47:43Z",
+          "line1": "1 22675U 93036A   09039.44980527  .00000001  00000-0  10202-4 0  9993",
+          "line2": "2 22675 074.0357 021.3748 0016046 100.9148 259.3817 14.31135575817269",
+          "published": "2009-02-08T06:38:20Z"
+        },
+        {
+          "epoch": "2009-02-08T12:28:23Z",
+          "line1": "1 22675U 93036A   09039.51970769 -.00000003 +00000-0 +87983-5 0  9992",
+          "line2": "2 22675 074.0356 021.2473 0016045 100.8058 259.4899 14.31135543817277",
+          "published": "2009-02-09T08:59:07Z"
+        },
+        {
+          "epoch": "2009-02-09T11:57:37Z",
+          "line1": "1 22675U 93036A   09040.49834364 -.00000001  00000-0  95251-5 0  9996",
+          "line2": "2 22675 074.0355 019.4646 0016027 098.7014 261.5952 14.31135643817415",
+          "published": "2009-02-09T15:29:16Z"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "label": "NASA Orbital Debris Quarterly News, vol. 13, issue 2 (April 2009): collision time, altitude, relative speed, inclinations and debris counts",
+      "url": "https://orbitaldebris.jsc.nasa.gov/quarterly-news/"
+    },
+    {
+      "label": "Johnson, Krisko, Liou and Anz-Meador, NASA's new breakup model of EVOLVE 4.0, Advances in Space Research 28(9), 2001: the Standard Breakup Model behind the illustrative debris cloud",
+      "url": null
+    },
+    {
+      "label": "Kessler and Cour-Palais, Collision frequency of artificial satellites: the creation of a debris belt, Journal of Geophysical Research 83(A6), 1978",
+      "url": null
+    }
+  ],
+  "archive": {
+    "source": "Space-Track gp_history",
+    "fetched_at": "2026-09-24T12:58:30Z",
+    "elset_counts": {
+      "22675": 11,
+      "24946": 13
+    }
+  }
+}
