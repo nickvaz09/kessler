@@ -29,9 +29,9 @@ On top of that:
   against a fitted baseline (PR-AUC 0.126 vs 0.065), but a later re-check found
   that baseline weakened by how its cross-validated scores were pooled. Against the
   latest risk itself (0.098) the gain is not significant, so the app doesn't ship
-  it. As a false-alarm filter, VIGIL's classifier does help: on ESA's data it
-  removes 28% of the baseline's false alarms while keeping 95% of its true calls
-  (the latest risk alone removes 9%).
+  it. As a false-alarm filter, VIGIL's classifier does help: on ESA's data, with its
+  threshold set inside the training folds, it removes 24% of the baseline's false
+  alarms while keeping 96% of its true calls (the latest risk alone removes 10%).
 - **Space weather**: live NOAA SWPC conditions feed the same globe, screening and
   assistant. NRLMSIS 2.1 turns a storm into air density at each object's altitude,
   and each close approach gets a storm-drift widening of its uncertainty and a
@@ -190,9 +190,9 @@ commit history, which dates each pre-registration, is available on request.
 - On the official loss, no model beats the latest-risk baseline (0.694) with
   confidence: the benchmark build matches it, and the best, a live-feed build, scores
   0.661 (-4.7%, 97.5% CI [-14.0, +3.6]%).
-- As a false-alarm filter, VIGIL's classifier removes 28% of the baseline's false
-  alarms while keeping 95% of its true calls; the latest risk alone removes 9%
-  (pooled cross-validation).
+- As a false-alarm filter, VIGIL's classifier removes 24% of the baseline's false
+  alarms while keeping 96% of its true calls, with thresholds set inside the training
+  folds; the latest risk alone removes 10% (pooled cross-validation).
 - Early warning (VIGIL-E) is not shipped: against the latest risk itself, its gain is
   not significant.
 
