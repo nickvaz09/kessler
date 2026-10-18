@@ -185,7 +185,8 @@ Challenge in four pre-registered rounds. Each round's plan and frozen code were
 committed before its real-data runs, and ESA's official test set was scored once.
 The plans and their results are in `docs/v2/vigil-lab.md`, and every report is in
 `reports/`. This repository starts from a clean snapshot of the project; the original
-commit history, which dates each pre-registration, is available on request.
+commit history, which dates each pre-registration, is kept as a git bundle that editors
+and reviewers can ask for, and `scripts/check_history.py` checks it against the paper.
 
 - On the official loss, no model beats the latest-risk baseline (0.694) with
   confidence: the benchmark build matches it, and the best, a live-feed build, scores
