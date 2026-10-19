@@ -952,7 +952,14 @@ def _tool_list_conjunctions(rt, args):
     risk = args.get("risk")
     if risk is not None and risk not in RISK_LEVELS:
         raise ToolError("risk must be one of critical|elevated|nominal")
-    where, params = ("", ()) if status == "all" else ("c.status = ?", (status,))
+    # same split as GET /conjunctions: an 'active' row whose TCA has passed
+    # since the last refresh counts as past, never as upcoming
+    if status == "active":
+        where, params = conjunctions_api.ACTIVE_WHERE, (conjunctions_api.now_iso(),)
+    elif status == "past":
+        where, params = conjunctions_api.PAST_WHERE, (conjunctions_api.now_iso(),)
+    else:
+        where, params = "", ()
     items = conjunctions_api.query_summaries(rt.conn, where, params)
     if risk:
         items = [i for i in items if i["risk_level"] == risk]

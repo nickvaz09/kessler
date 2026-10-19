@@ -265,6 +265,28 @@ def test_data_tool_get_conjunction_detail(seeded_db):
     assert payload["risk_predictions"][0]["model_version"] == "heuristic-0.1"
 
 
+def test_list_conjunctions_tool_treats_passed_active_rows_as_past(seeded_db):
+    # still 'active' in the table, but its TCA passed after the last refresh
+    conn = db.get_conn()
+    conn.execute(
+        "INSERT INTO conjunctions (id, primary_object_id, secondary_object_id,"
+        " time_of_closest_approach, first_seen_at, status)"
+        " VALUES (4, 1, 3, '2026-07-21T12:00:00Z', '2026-07-20T00:00:00Z', 'active')")
+    conn.commit()
+    conn.close()
+    fake = FakeClient([
+        resp([tool_use("tu_1", "list_conjunctions", {}),
+              tool_use("tu_2", "list_conjunctions", {"status": "past"})],
+             stop="tool_use"),
+        resp([text_block("ok")]),
+    ])
+    _chat(fake)
+    results = fake.messages.calls[1]["messages"][-1]["content"]
+    active, past = (json.loads(r["content"]) for r in results)
+    assert sorted(i["id"] for i in active["items"]) == [1, 2]
+    assert sorted(i["id"] for i in past["items"]) == [3, 4]
+
+
 def test_unknown_and_missing_entities_are_error_results(seeded_db):
     fake = FakeClient([
         resp(
